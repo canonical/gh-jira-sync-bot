@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 import os
 
@@ -6,9 +8,11 @@ import yaml
 from dotenv import load_dotenv
 from fastapi import Body
 from fastapi import FastAPI
+from fastapi import HTTPException
 from github import Github
 from github import GithubException
 from github import GithubIntegration
+from starlette.requests import Request
 from yaml.scanner import ScannerError
 
 load_dotenv()
@@ -62,8 +66,32 @@ def merge_dicts(d1, d2):
             d1[key] = d2[key]
 
 
+def verify_signature(payload_body, secret_token, signature_header):
+    """Verify that the payload was sent from GitHub by validating SHA256.
+
+    Raise and return 403 if not authorized.
+
+    Args:
+        payload_body: original request body to verify (request.body())
+        secret_token: GitHub app webhook token (WEBHOOK_SECRET)
+        signature_header: header received from GitHub (x-hub-signature-256)
+
+    """
+    if not signature_header:
+        raise HTTPException(status_code=403, detail="x-hub-signature-256 header is missing!")
+
+    hash_object = hmac.new(secret_token.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256)
+    expected_signature = "sha256=" + hash_object.hexdigest()
+    if not hmac.compare_digest(expected_signature, signature_header):
+        raise HTTPException(status_code=403, detail="Request signatures didn't match!")
+
+
 @app.post("/")
-def bot(payload: dict = Body(...)):
+async def bot(request: Request, payload: dict = Body(...)):
+    body_ = await request.body()
+    signature_ = request.headers.get("x-hub-signature-256")
+
+    verify_signature(body_, os.getenv("WEBHOOK_SECRET"), signature_)
 
     # Check if the event is a GitHub PR creation event
     if not all(k in payload.keys() for k in ["action", "issue"]) and payload["action"] == "opened":
@@ -75,9 +103,6 @@ def bot(payload: dict = Body(...)):
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
 
-    # Get a git connection as our bot
-    # Here is where we are getting the permission to talk as our bot and not
-    # as a Python webservice
     git_connection = Github(
         login_or_token=git_integration.get_access_token(
             git_integration.get_repo_installation(owner, repo_name).id
