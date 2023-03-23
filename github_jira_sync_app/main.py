@@ -85,12 +85,10 @@ def bot(payload: dict = Body(...)):
     )
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
     try:
-        settings_content = repo.get_contents(
-            ".github/workflows/.jira_sync_config55.yaml"
-        ).decoded_content
+        settings_content = repo.get_contents(".github/.jira_sync_config.yaml").decoded_content
     except GithubException:
         logger.info("Settings file was not found, use default")
-        settings_content = b""
+        settings_content = b"{}"
 
     try:
         settings = yaml.safe_load(settings_content)
