@@ -109,26 +109,39 @@ async def bot(request: Request, payload: dict = Body(...)):
         ).token
     )
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
+    issue = repo.get_issue(number=payload["issue"]["number"])
     try:
         settings_content = repo.get_contents(".github/.jira_sync_config.yaml").decoded_content
     except GithubException:
-        logger.info("Settings file was not found, use default")
-        settings_content = b"{}"
+        logger.error("Settings file was not found")
+        issue.create_comment(".github/.jira_sync_config.yaml file was not found")
+        return "ok"
 
     try:
         settings = yaml.safe_load(settings_content)
     except ScannerError:
-        logger.warning("YAML file is invalid, use default")
-        settings = {}
+        logger.error("YAML file is invalid")
+        issue.create_comment(".github/.jira_sync_config.yaml file is invalid. Check syntax.")
+        return "ok"
 
     merge_dicts(settings, DEFAULT_SETTINGS)
 
     settings = settings["settings"]
 
-    if not settings["add_comment"]:
+    if not settings["jira_instance"]:
+        issue.create_comment(
+            "Jira instance is not specified. Add jira_instance key to the settings file."
+        )
         return "ok"
 
-    issue = repo.get_issue(number=payload["issue"]["number"])
+    if not settings["jira_project_key"]:
+        issue.create_comment(
+            "Jira project key is not specified. Add jira_project_key key to the settings file."
+        )
+        return "ok"
+
+    if not settings["add_comment"]:
+        return "ok"
 
     response = requests.get(url="https://picsum.photos/200/300")
     meme_url = response.url
