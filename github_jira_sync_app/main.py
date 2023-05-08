@@ -23,7 +23,7 @@ with open("settings.yaml") as file:
 
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
-    log = logging.getLogger("api-demo-server")
+    log = logging.getLogger("sync-bot-server")
     log.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
         fmt="%(asctime)s (%(levelname)s) %(message)s", datefmt="%d.%m.%Y %H:%M:%S"
@@ -32,7 +32,7 @@ def define_logger():
     stream_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
 
-    log_file = os.environ.get("DEMO_SERVER_LOGFILE", "demo_server.log")
+    log_file = os.environ.get("SYNC_BOT_LOGFILE", "sync_bot.log")
     file_handler = logging.FileHandler(filename=log_file)
     file_handler.setFormatter(formatter)
     log.addHandler(file_handler)
