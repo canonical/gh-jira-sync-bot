@@ -6,5 +6,4 @@ settings:
   sync_description: true
   sync_comments: true
   epic_key:
-  jira_instance:
   jira_project_key:
