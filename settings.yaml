@@ -1,2 +1,10 @@
 settings:
-  add_comment: false
+  components:
+  labels:
+    - jira
+  add_gh_comment: false
+  sync_description: true
+  sync_comments: true
+  epic_key:
+  jira_instance:
+  jira_project_key:
