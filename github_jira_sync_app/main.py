@@ -122,6 +122,10 @@ async def bot(request: Request, payload: dict = Body(...)):
     if payload["sender"]["login"] == "syncronize-issues-to-jira[bot]":
         return "ok"
 
+    if payload["action"] == "deleted":
+        # do not handle deletion of comments/issues
+        return "ok"
+
     if payload["action"] == "edited" and "comment" in payload.keys():
         # do not handle modification of comments
         return "ok"
@@ -182,7 +186,19 @@ async def bot(request: Request, payload: dict = Body(...)):
     if settings["epic_key"]:
         issue_dict["parent"] = {"key": settings["epic_key"]}
 
+    if settings["components"]:
+        allowed_components = [c.name for c in jira.project_components(settings["jira_project_key"])]
+
+        issue_dict["components"] = [
+            {"name": component}
+            for component in settings["components"]
+            if component in allowed_components
+        ]
+
     if not existing_issues:
+        if payload["action"] == "closed":
+            return "ok"
+
         new_issue = jira.create_issue(fields=issue_dict)
         if settings["add_gh_comment"]:
             issue.create_comment(
