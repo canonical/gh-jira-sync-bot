@@ -15,6 +15,7 @@ dependencies = [
     "pygithub==1.58.1",
     "uvicorn[standard]==0.18.3",
     "load_dotenv==0.1.0",
+    "jira==3.5.0",
 ]
 
 # development dependencies
