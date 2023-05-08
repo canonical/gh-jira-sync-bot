@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/pycqa/autoflake
+    rev: v1.7.6
+    hooks:
+      - id: autoflake
+        args: [ "-i", "--remove-all-unused-imports" ]
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: ["-l", "100"]
+  - repo: https://github.com/asottile/blacken-docs
+    rev: v1.12.1
+    hooks:
+      - id: blacken-docs
+        additional_dependencies: [black]
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["-sl", "--profile", "black"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        name: flake8-py3
+        args: ["--max-line-length", "100", "--max-doc-length", "100"]
