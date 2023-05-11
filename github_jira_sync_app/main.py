@@ -123,8 +123,8 @@ async def bot(request: Request, payload: dict = Body(...)):
         # do not handle bot's actions
         return "ok"
 
-    if payload["action"] == "deleted":
-        # do not handle deletion of comments/issues
+    if payload["action"] in ["deleted", "unlabeled"]:
+        # do not handle deletion of comments/issues and unlabeling
         return "ok"
 
     if payload["action"] == "edited" and "comment" in payload.keys():
@@ -163,6 +163,13 @@ async def bot(request: Request, payload: dict = Body(...)):
         issue.create_comment(
             "Jira project key is not specified. Add `jira_project_key` key to the settings file."
         )
+        return "ok"
+
+    allowed_labels = [label.lower() for label in settings["labels"]]
+    if allowed_labels and not any(
+        label["name"].lower() in allowed_labels for label in payload["issue"]["labels"]
+    ):
+        logger.info("Issue is not labeled with the specified label")
         return "ok"
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
