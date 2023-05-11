@@ -120,6 +120,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         return "ok"
 
     if payload["sender"]["login"] == "syncronize-issues-to-jira[bot]":
+        # do not handle bot's actions
         return "ok"
 
     if payload["action"] == "deleted":
@@ -164,9 +165,6 @@ async def bot(request: Request, payload: dict = Body(...)):
         )
         return "ok"
 
-    if not settings["add_gh_comment"]:
-        return "ok"
-
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     existing_issues = jira.search_issues(
         f'project={settings["jira_project_key"]} AND description ~ "{issue.html_url}"'
@@ -200,6 +198,8 @@ async def bot(request: Request, payload: dict = Body(...)):
             return "ok"
 
         new_issue = jira.create_issue(fields=issue_dict)
+        existing_issues.append(new_issue)
+
         if settings["add_gh_comment"]:
             issue.create_comment(
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
@@ -217,6 +217,14 @@ async def bot(request: Request, payload: dict = Body(...)):
                     issue_dict["components"].append({"name": component.name})
 
             issue.update(fields=issue_dict)
+
+    if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
+        # new comment was added to the issue
+        jira.add_comment(
+            existing_issues[0],
+            f"User *{payload['sender']['login']}* commented:\n {payload['comment']['body']}",
+        )
+        return "ok"
 
     return "ok"
 
