@@ -218,7 +218,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
             issue.update(fields=issue_dict)
 
-    if payload["action"] == "created" and "comment" in payload.keys():
+    if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
         jira.add_comment(
             existing_issues[0],
