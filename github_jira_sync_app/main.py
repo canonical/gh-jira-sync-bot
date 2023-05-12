@@ -165,10 +165,15 @@ async def bot(request: Request, payload: dict = Body(...)):
         )
         return "ok"
 
+    if not settings["status_mapping"]:
+        issue.create_comment(
+            "Status mapping is not specified. Add `status_mapping` key to the settings file."
+        )
+        return "ok"
+
     allowed_labels = [label.lower() for label in settings["labels"]]
-    if allowed_labels and not any(
-        label["name"].lower() in allowed_labels for label in payload["issue"]["labels"]
-    ):
+    payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
+    if allowed_labels and not any(label in allowed_labels for label in payload_labels):
         logger.info("Issue is not labeled with the specified label")
         return "ok"
 
@@ -182,11 +187,19 @@ async def bot(request: Request, payload: dict = Body(...)):
         gh_issue_author=issue.user.login,
         gh_issue_body=issue_body,
     )
+
+    issue_type = "Bug"
+    if settings["label_mapping"]:
+        for label in payload_labels:
+            if label in settings["label_mapping"]:
+                issue_type = settings["label_mapping"][label]
+                break
+
     issue_dict = {
         "project": {"key": settings["jira_project_key"]},
         "summary": issue.title,
         "description": issue_description,
-        "issuetype": {"name": "Bug"},
+        "issuetype": {"name": issue_type},
     }
     if settings["epic_key"]:
         issue_dict["parent"] = {"key": settings["epic_key"]}
@@ -199,6 +212,9 @@ async def bot(request: Request, payload: dict = Body(...)):
             for component in settings["components"]
             if component in allowed_components
         ]
+
+    opened_status = settings["status_mapping"]["opened"]
+    closed_status = settings["status_mapping"]["closed"]
 
     if not existing_issues:
         if payload["action"] == "closed":
@@ -214,9 +230,9 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         issue = existing_issues[0]
         if payload["action"] == "closed":
-            jira.transition_issue(issue, "Done")
+            jira.transition_issue(issue, closed_status)
         elif payload["action"] == "reopened":
-            jira.transition_issue(issue, "Untriaged")
+            jira.transition_issue(issue, opened_status)
         elif payload["action"] == "edited":
             if settings["components"]:
                 # need to append components to the existing list
