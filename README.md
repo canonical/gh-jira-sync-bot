@@ -51,14 +51,12 @@ settings:
 
 ## Server Configuration
 
-The following environment variables are required:
-APP_ID - GitHub App ID
-PRIVATE_KEY - GitHub App private key
-WEBHOOK_SECRET - GitHub App webhook secret
-GITHUB_CLIENT_ID - GitHub OAuth App client ID
-GITHUB_CLIENT_SECRET - GitHub OAuth App client secret
-JIRA_INSTANCE - Jira instance URL
-JIRA_USERNAME - Jira username
-JIRA_TOKEN - Jira API token
-
-
+The following environment variables are required:  
+`APP_ID` - GitHub App ID  
+`PRIVATE_KEY` - GitHub App private key  
+`WEBHOOK_SECRET` - GitHub App webhook secret  
+`GITHUB_CLIENT_ID` - GitHub OAuth App client ID  
+`GITHUB_CLIENT_SECRET` - GitHub OAuth App client secret  
+`JIRA_INSTANCE` - Jira instance URL  
+`JIRA_USERNAME` - Jira username  
+`JIRA_TOKEN` - Jira API token  
