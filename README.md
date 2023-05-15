@@ -1,8 +1,9 @@
 ## About
 
 Lightweight FastAPI server to serve GitHub bot that synchronizes issues from GitHub to Jira.
-In order to use this bot, you need to create a GitHub App and an OAuth App. 
-The GitHub App is used to receive webhooks from GitHub and the OAuth App is used to authenticate users.
+
+In order to use this bot, you need to create a GitHub App. GitHub App registers application that should receive webhooks on selected events.
+
 
 ## Client side configuration
 
