@@ -7,7 +7,8 @@ name = "github_jira_sync_app"
 authors = [{name = "Maksim Beliaev", email = "beliaev.m.s@gmail.com"}]
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: Apache Software License"]
-dynamic = ["version", "description"]
+description = "FastAPI server to serve GitHub bot that synchronizes issues from GitHub to Jira"
+dynamic = ["version"]
 
 dependencies = [
     "fastapi==0.95.0",

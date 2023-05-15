@@ -66,6 +66,8 @@ logger = define_logger()
 
 app_id = os.getenv("APP_ID")
 app_key = os.getenv("PRIVATE_KEY")
+app_key = app_key.replace("\\n", "\n")  # since docker env variables do not support multiline
+
 git_integration = GithubIntegration(
     app_id,
     app_key,
