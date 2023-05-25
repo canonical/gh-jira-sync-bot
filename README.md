@@ -11,19 +11,27 @@ In order to use this bot, you need to create `.github/.jira_sync_config.yaml` fi
 The file should contain the following fields:
 ```yaml
 settings:
-  # (optional) Jira project components that should be attached to the created issue
+    # Jira project key to create the issue in
+  jira_project_key: "MTC"
+  
+  # Dictionary mapping GitHub issue status to Jira issue status
+  status_mapping:
+    opened: Untriaged
+    closed: done 
+    
+  # (Optional) Jira project components that should be attached to the created issue
   # Component names are case-sensitive
   components:
     - IoT
     - DACH TT
       
-  # (optional) GitHub labels. Only issues with one of those labels will be synchronized.
+  # (Optional) GitHub labels. Only issues with one of those labels will be synchronized.
   # If not specified, all issues will be synchronized
   labels:
     - bug
     - custom
       
-  # (optional) (Default: false) Add a new comment in GitHub with a link to Jira created issue
+  # (Optional) (Default: false) Add a new comment in GitHub with a link to Jira created issue
   add_gh_comment: false
   
   # (Optional) (Default: true) Synchronize issue description from GitHub to Jira
@@ -34,15 +42,7 @@ settings:
   
   # (Optional) (Default: None) Parent Epic key to link the issue to
   epic_key: "MTC-296"
-  
-  # Jira project key to create the issue in
-  jira_project_key: "MTC"
-  
-  # Dictionary mapping GitHub issue status to Jira issue status
-  status_mapping:
-    opened: Untriaged
-    closed: done 
-    
+      
   # (Optional) Dictionary mapping GitHub issue labels to Jira issue types. 
   # If label on the issue is not in specified list, this issue will be created as a Bug
   label_mapping:
