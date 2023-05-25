@@ -32,3 +32,10 @@ package is built using:
 ```bash
 flit build
 ```
+
+## Build docker
+```bash
+ sudo docker buildx build -t github_jira_sync_app --output type=docker .
+ sudo docker tag github_jira_sync_app ghcr.io/canonical/gh-jira-sync-bot:0.0.2
+ sudo docker push ghcr.io/canonical/gh-jira-sync-bot:0.0.2
+```
