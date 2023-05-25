@@ -7,3 +7,5 @@ settings:
   sync_comments: true
   epic_key:
   jira_project_key:
+  label_mapping:
+  status_mapping:
