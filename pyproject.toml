@@ -17,6 +17,7 @@ dependencies = [
     "uvicorn[standard]==0.18.3",
     "load_dotenv==0.1.0",
     "jira==3.5.0",
+    "mistletoe==1.0.1"
 ]
 
 # development dependencies

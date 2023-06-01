@@ -12,8 +12,12 @@ from github import Github
 from github import GithubException
 from github import GithubIntegration
 from jira import JIRA
+from mistletoe import Document
+from mistletoe.contrib.jira_renderer import JIRARenderer
 from starlette.requests import Request
 from yaml.scanner import ScannerError
+
+jira_text_renderer = JIRARenderer()
 
 load_dotenv()
 
@@ -184,6 +188,10 @@ async def bot(request: Request, payload: dict = Body(...)):
         f'project={settings["jira_project_key"]} AND description ~ "{issue.html_url}"'
     )
     issue_body = issue.body if settings["sync_description"] else ""
+    if issue_body:
+        doc = Document(issue_body)
+        issue_body = jira_text_renderer.render(doc)
+
     issue_description = jira_issue_description_template.format(
         gh_issue_url=issue.html_url,
         gh_issue_author=issue.user.login,
@@ -245,9 +253,13 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
+
+        comment_body = payload["comment"]["body"]
+        doc = Document(comment_body)
+        comment_body = jira_text_renderer.render(doc)
         jira.add_comment(
             existing_issues[0],
-            f"User *{payload['sender']['login']}* commented:\n {payload['comment']['body']}",
+            f"User *{payload['sender']['login']}* commented:\n {comment_body}",
         )
         return "ok"
 
