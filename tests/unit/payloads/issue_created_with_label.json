@@ -1,5 +1,5 @@
 {
-  "action": "labeled",
+  "action": "opened",
   "issue": {
     "url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30",
     "repository_url": "https://api.github.com/repos/beliaev-maksim/test-ci",
@@ -7,10 +7,10 @@
     "comments_url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30/comments",
     "events_url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30/events",
     "html_url": "https://github.com/beliaev-maksim/test-ci/issues/30",
-    "id": 1745060534,
-    "node_id": "I_kwDOI-HsRM5oA4K2",
+    "id": 1760846621,
+    "node_id": "I_kwDOI-HsRM5o9GMd",
     "number": 30,
-    "title": "day after",
+    "title": "klmlkm",
     "user": {
       "login": "beliaev-maksim",
       "id": 51964909,
@@ -50,8 +50,8 @@
     ],
     "milestone": null,
     "comments": 0,
-    "created_at": "2023-06-07T05:19:14Z",
-    "updated_at": "2023-06-07T05:19:14Z",
+    "created_at": "2023-06-16T15:21:36Z",
+    "updated_at": "2023-06-16T15:21:36Z",
     "closed_at": null,
     "author_association": "OWNER",
     "active_lock_reason": null,
@@ -71,15 +71,6 @@
     "timeline_url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30/timeline",
     "performed_via_github_app": null,
     "state_reason": null
-  },
-  "label": {
-    "id": 5157325446,
-    "node_id": "LA_kwDOI-HsRM8AAAABM2aKhg",
-    "url": "https://api.github.com/repos/beliaev-maksim/test-ci/labels/bug",
-    "name": "bug",
-    "color": "d73a4a",
-    "default": true,
-    "description": "Something isn't working"
   },
   "repository": {
     "id": 602008644,

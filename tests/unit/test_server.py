@@ -42,7 +42,7 @@ def test_comment_created_by_bot(signature_mock):
     assert response.json() == {"msg": "Action was triggered by bot. Ignoring."}
 
 
-@responses.activate
+@responses.activate(assert_all_requests_are_fired=True)
 def test_issue_labeled_correct(signature_mock):
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
@@ -53,3 +53,18 @@ def test_issue_labeled_correct(signature_mock):
     )
 
     assert response.status_code == 200
+    assert response.json() == {"msg": "Issue was created in Jira"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_created_with_label(signature_mock):
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_created_with_label.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Issue was created in Jira"}
