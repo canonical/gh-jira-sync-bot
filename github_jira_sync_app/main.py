@@ -82,6 +82,12 @@ app_id = os.getenv("APP_ID", "")
 app_key = os.getenv("PRIVATE_KEY", "")
 app_key = app_key.replace("\\n", "\n")  # since docker env variables do not support multiline
 
+git_integration = GithubIntegration(
+    app_id,
+    app_key,
+)
+
+
 app = FastAPI()
 
 
@@ -145,11 +151,6 @@ async def bot(request: Request, payload: dict = Body(...)):
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
 
-    # keep it here until https://github.com/PyGithub/PyGithub/issues/2431 is fixed
-    git_integration = GithubIntegration(
-        app_id,
-        app_key,
-    )
     git_connection = Github(
         login_or_token=git_integration.get_access_token(
             git_integration.get_repo_installation(owner, repo_name).id

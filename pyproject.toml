@@ -13,7 +13,7 @@ dynamic = ["version"]
 dependencies = [
     "fastapi==0.95.0",
     "pyyaml==6.0.0",
-    "pygithub==1.58.1",
+    "pygithub==1.59.0",
     "uvicorn[standard]==0.22.0",
     "load_dotenv==0.1.0",
     "jira==3.5.0",
