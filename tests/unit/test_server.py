@@ -12,7 +12,7 @@ os.environ["WEBHOOK_SECRET"] = "lr16xaodb2r4iy6he00uhacw9c9i4yvhlstqv9jy"
 
 
 def _get_json(file_name):
-    with open(Path("payloads") / file_name) as file:
+    with open(Path(__file__).parent / "payloads" / file_name) as file:
         return json.load(file)
 
 

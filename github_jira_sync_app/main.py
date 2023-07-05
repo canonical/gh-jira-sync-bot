@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import logging
 import os
 from pathlib import Path
@@ -44,10 +45,6 @@ The internal ticket has been created: {jira_issue_link}.
 """
 
 
-with open(Path(__file__).parent.parent / "settings.yaml") as file:
-    DEFAULT_SETTINGS = yaml.safe_load(file)
-
-
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
     log = logging.getLogger("sync-bot-server")
@@ -68,6 +65,13 @@ def define_logger():
 
 logger = define_logger()
 
+
+with open(Path(__file__).parent / "settings.yaml") as file:
+    _file_settings = yaml.safe_load(file)
+
+_env_settings = json.loads(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
+
+DEFAULT_SETTINGS = _env_settings or _file_settings
 
 app_id = os.getenv("APP_ID")
 app_key = os.getenv("PRIVATE_KEY")
@@ -121,7 +125,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     if not all(k in payload.keys() for k in ["action", "issue"]) and payload["action"] == "opened":
         return "ok"
 
-    if payload["sender"]["login"] == "syncronize-issues-to-jira[bot]":
+    if payload["sender"]["login"] == os.getenv("BOT_NAME"):
         # do not handle bot's actions
         return {"msg": "Action was triggered by bot. Ignoring."}
 
