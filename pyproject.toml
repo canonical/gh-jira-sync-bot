@@ -14,10 +14,11 @@ dependencies = [
     "fastapi==0.95.0",
     "pyyaml==6.0.0",
     "pygithub==1.58.1",
-    "uvicorn[standard]==0.18.3",
+    "uvicorn[standard]==0.22.0",
     "load_dotenv==0.1.0",
     "jira==3.5.0",
-    "mistletoe==1.0.1"
+    "mistletoe==1.0.1",
+    "types-PyYAML"
 ]
 
 # development dependencies

@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -14,8 +15,8 @@ from github import Github
 from github import GithubException
 from github import GithubIntegration
 from jira import JIRA
-from mistletoe import Document
-from mistletoe.contrib.jira_renderer import JIRARenderer
+from mistletoe import Document  # type: ignore[import]
+from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
 from starlette.requests import Request
 from yaml.scanner import ScannerError
 
@@ -23,9 +24,13 @@ jira_text_renderer = JIRARenderer()
 
 load_dotenv()
 
-jira_instance_url = os.getenv("JIRA_INSTANCE")
-jira_username = os.getenv("JIRA_USERNAME")
-jira_token = os.getenv("JIRA_TOKEN")
+jira_instance_url = os.getenv("JIRA_INSTANCE", "")
+jira_username = os.getenv("JIRA_USERNAME", "")
+jira_token = os.getenv("JIRA_TOKEN", "")
+
+assert jira_instance_url, "URL to your Jira instance must be provided via JIRA_INSTANCE env var"
+assert jira_username, "Jira username must be provided via JIRA_USERNAME env var"
+assert jira_token, "Jira API token must be provided via JIRA_TOKEN env var"
 
 jira_issue_description_template = """
 This issue was created from GitHub Issue {gh_issue_url}
@@ -73,8 +78,8 @@ _env_settings = json.loads(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
 
 DEFAULT_SETTINGS = _env_settings or _file_settings
 
-app_id = os.getenv("APP_ID")
-app_key = os.getenv("PRIVATE_KEY")
+app_id = os.getenv("APP_ID", "")
+app_key = os.getenv("PRIVATE_KEY", "")
 app_key = app_key.replace("\\n", "\n")  # since docker env variables do not support multiline
 
 app = FastAPI()
@@ -153,7 +158,8 @@ async def bot(request: Request, payload: dict = Body(...)):
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
     issue = repo.get_issue(number=payload["issue"]["number"])
     try:
-        settings_content = repo.get_contents(".github/.jira_sync_config.yaml").decoded_content
+        contents = repo.get_contents(".github/.jira_sync_config.yaml")
+        settings_content = contents.decoded_content  # type: ignore[union-attr]
     except GithubException:
         logger.error("Settings file was not found")
         issue.create_comment(".github/.jira_sync_config.yaml file was not found")
@@ -190,8 +196,10 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     existing_issues = jira.search_issues(
-        f'project={settings["jira_project_key"]} AND description ~ "{issue.html_url}"'
+        f'project={settings["jira_project_key"]} AND description ~ "{issue.html_url}"',
+        json_result=False,
     )
+    assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
     issue_body = issue.body if settings["sync_description"] else ""
     if issue_body:
         doc = Document(issue_body)
@@ -210,7 +218,7 @@ async def bot(request: Request, payload: dict = Body(...)):
                 issue_type = settings["label_mapping"][label]
                 break
 
-    issue_dict = {
+    issue_dict: dict[str, Any] = {
         "project": {"key": settings["jira_project_key"]},
         "summary": issue.title,
         "description": issue_description,
@@ -243,18 +251,18 @@ async def bot(request: Request, payload: dict = Body(...)):
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
             )
     else:
-        issue = existing_issues[0]
+        jira_issue = existing_issues[0]
         if payload["action"] == "closed":
-            jira.transition_issue(issue, closed_status)
+            jira.transition_issue(jira_issue, closed_status)
         elif payload["action"] == "reopened":
-            jira.transition_issue(issue, opened_status)
+            jira.transition_issue(jira_issue, opened_status)
         elif payload["action"] == "edited":
             if settings["components"]:
                 # need to append components to the existing list
-                for component in issue.fields.components:
+                for component in jira_issue.fields.components:
                     issue_dict["components"].append({"name": component.name})
 
-            issue.update(fields=issue_dict)
+            jira_issue.update(fields=issue_dict)
 
     if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
