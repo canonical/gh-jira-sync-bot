@@ -275,7 +275,7 @@ async def bot(request: Request, payload: dict = Body(...)):
             existing_issues[0],
             f"User *{payload['sender']['login']}* commented:\n {comment_body}",
         )
-        return "ok"
+        return {"msg": "New comment from GitHub was added to Jira"}
 
     return {"msg": "Issue was created in Jira"}
 
