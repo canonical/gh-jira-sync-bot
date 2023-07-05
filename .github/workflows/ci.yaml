@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  linting:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        python -m pip install tox
+
+    - name: Run pre-commit
+      run: |
+        tox -e precom
+
+    - name: Run mypy
+      run: |
+        tox -e mypy
+
+  tests:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        python -m pip install .[test]
+
+    - name: Run Pytest
+      run: |
+        coverage run -m pytest . -v --cov github_jira_sync_app --cov tests --cov-report term-missing
