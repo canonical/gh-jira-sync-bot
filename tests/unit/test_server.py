@@ -2,13 +2,16 @@ import json
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 
-from github_jira_sync_app.main import app
+load_dotenv(Path(__file__).parent / "dumm_env", verbose=True)
+assert os.environ["JIRA_INSTANCE"]
+
+# import only after we set dummy environment
+from github_jira_sync_app.main import app  # noqa: E402
 
 client = TestClient(app)
-
-os.environ["WEBHOOK_SECRET"] = "lr16xaodb2r4iy6he00uhacw9c9i4yvhlstqv9jy"
 
 
 def _get_json(file_name):
