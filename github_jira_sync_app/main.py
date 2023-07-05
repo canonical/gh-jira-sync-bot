@@ -169,18 +169,18 @@ async def bot(request: Request, payload: dict = Body(...)):
         settings = yaml.safe_load(settings_content)
     except ScannerError:
         logger.error("YAML file is invalid")
-        issue.create_comment(".github/.jira_sync_config.yaml file is invalid. Check syntax.")
-        return "ok"
+        msg = ".github/.jira_sync_config.yaml file is invalid. Check syntax."
+        issue.create_comment(msg)
+        return {"msg": msg}
 
     merge_dicts(settings, DEFAULT_SETTINGS)
 
     settings = settings["settings"]
 
     if not settings["jira_project_key"]:
-        issue.create_comment(
-            "Jira project key is not specified. Add `jira_project_key` key to the settings file."
-        )
-        return "ok"
+        msg = "Jira project key is not specified. Add `jira_project_key` key to the settings file."
+        issue.create_comment(msg)
+        return {"msg": msg}
 
     if not settings["status_mapping"]:
         issue.create_comment(
@@ -191,8 +191,9 @@ async def bot(request: Request, payload: dict = Body(...)):
     allowed_labels = [label.lower() for label in settings["labels"]]
     payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
     if allowed_labels and not any(label in allowed_labels for label in payload_labels):
-        logger.info("Issue is not labeled with the specified label")
-        return "ok"
+        msg = "Issue is not labeled with the specified label"
+        logger.info(msg)
+        return {"msg": msg}
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     existing_issues = jira.search_issues(
@@ -274,9 +275,9 @@ async def bot(request: Request, payload: dict = Body(...)):
             existing_issues[0],
             f"User *{payload['sender']['login']}* commented:\n {comment_body}",
         )
-        return "ok"
+        return {"msg": "New comment from GitHub was added to Jira"}
 
-    return "ok"
+    return {"msg": "Issue was created in Jira"}
 
 
 if __name__ == "__main__":
