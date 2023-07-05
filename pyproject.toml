@@ -25,9 +25,16 @@ dependencies = [
 test = [
     "pre-commit",
     "pytest",
-    "httpx"
+    "coverage >= 6.0.0",
+    "pytest-cov",
+    "mypy",
+    "httpx",
+    "tox"
 ]
 
 deploy = [
     "flit==3.7.1",
 ]
+
+[tool.mypy]
+exclude = "tests"
