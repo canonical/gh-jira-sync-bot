@@ -132,21 +132,17 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     verify_signature(body_, os.getenv("WEBHOOK_SECRET"), signature_)
 
-    # Check if the event is a GitHub PR creation event
-    if not all(k in payload.keys() for k in ["action", "issue"]) and payload["action"] == "opened":
-        return "ok"
+    if not all(k in payload.keys() for k in ["action", "issue"]):
+        return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
 
     if payload["sender"]["login"] == os.getenv("BOT_NAME"):
-        # do not handle bot's actions
         return {"msg": "Action was triggered by bot. Ignoring."}
 
     if payload["action"] in ["deleted", "unlabeled"]:
-        # do not handle deletion of comments/issues and unlabeling
-        return "ok"
+        return {"msg": "Action was triggered by Issue unlabeling. Ignoring."}
 
     if payload["action"] == "edited" and "comment" in payload.keys():
-        # do not handle modification of comments
-        return "ok"
+        return {"msg": "Action was triggered by comment edit. Ignoring."}
 
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
@@ -162,16 +158,17 @@ async def bot(request: Request, payload: dict = Body(...)):
         contents = repo.get_contents(".github/.jira_sync_config.yaml")
         settings_content = contents.decoded_content  # type: ignore[union-attr]
     except GithubException:
-        logger.error("Settings file was not found")
-        issue.create_comment(".github/.jira_sync_config.yaml file was not found")
-        return "ok"
+        msg = ".github/.jira_sync_config.yaml file was not found"
+        logger.error(msg)
+        issue.create_comment(msg)
+        return {"msg": msg}
 
     try:
         settings = yaml.safe_load(settings_content)
     except ScannerError:
-        logger.error("YAML file is invalid")
         msg = ".github/.jira_sync_config.yaml file is invalid. Check syntax."
         issue.create_comment(msg)
+        logger.error(msg)
         return {"msg": msg}
 
     merge_dicts(settings, DEFAULT_SETTINGS)
@@ -181,19 +178,20 @@ async def bot(request: Request, payload: dict = Body(...)):
     if not settings["jira_project_key"]:
         msg = "Jira project key is not specified. Add `jira_project_key` key to the settings file."
         issue.create_comment(msg)
+        logger.warning(msg)
         return {"msg": msg}
 
     if not settings["status_mapping"]:
-        issue.create_comment(
-            "Status mapping is not specified. Add `status_mapping` key to the settings file."
-        )
-        return "ok"
+        msg = "Status mapping is not specified. Add `status_mapping` key to the settings file."
+        issue.create_comment(msg)
+        logger.warning(msg)
+        return {"msg": msg}
 
     allowed_labels = [label.lower() for label in settings["labels"]]
     payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
     if allowed_labels and not any(label in allowed_labels for label in payload_labels):
         msg = "Issue is not labeled with the specified label"
-        logger.info(msg)
+        logger.warning(msg)
         return {"msg": msg}
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
@@ -243,7 +241,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if not existing_issues:
         if payload["action"] == "closed":
-            return "ok"
+            return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
 
         new_issue = jira.create_issue(fields=issue_dict)
         existing_issues.append(new_issue)
