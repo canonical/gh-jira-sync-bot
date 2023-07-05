@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 
+import responses
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 
@@ -11,11 +12,12 @@ assert os.environ["JIRA_INSTANCE"]
 # import only after we set dummy environment
 from github_jira_sync_app.main import app  # noqa: E402
 
+UNITTESTS_DIR = Path(__file__).parent
 client = TestClient(app)
 
 
 def _get_json(file_name):
-    with open(Path(__file__).parent / "payloads" / file_name) as file:
+    with open(UNITTESTS_DIR / "payloads" / file_name) as file:
         return json.load(file)
 
 
@@ -40,7 +42,11 @@ def test_comment_created_by_bot(signature_mock):
     assert response.json() == {"msg": "Action was triggered by bot. Ignoring."}
 
 
+@responses.activate
 def test_issue_labeled_correct(signature_mock):
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     response = client.post(
         "/",
         json=_get_json("issue_labeled_correct.json"),

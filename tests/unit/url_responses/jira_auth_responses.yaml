@@ -1,0 +1,27 @@
+# this file is generated automatically via responses. Use _recorder.record()
+responses:
+- response:
+    auto_calculate_content_length: false
+    body: '{"baseUrl":"https://my-jira.atlassian.net","version":"1001.0.0-SNAPSHOT","versionNumbers":[1001,0,0],"deploymentType":"Cloud","buildNumber":100229,"buildDate":"2023-07-04T14:01:07.000+0100","serverTime":"2023-07-05T12:56:24.472+0100","scmInfo":"634ba050f968f89f209dd80db6760d2dfbef51e5","serverTitle":"Jira","defaultLocale":{"locale":"en_US"}}'
+    content_type: text/plain
+    method: GET
+    status: 200
+    url: https://my-jira.atlassian.net/rest/api/2/serverInfo
+- response:
+    auto_calculate_content_length: false
+    body: "[{}]"
+    content_type: text/plain; charset=utf-8
+    method: GET
+    status: 200
+    url: https://my-jira.atlassian.net/rest/api/2/field
+- response:
+    auto_calculate_content_length: false
+    body: '[{"self":"https://my-jira.atlassian.net/rest/api/2/component/11679","id":"11679","name":"Cloud
+      Native","assigneeType":"PROJECT_DEFAULT","realAssigneeType":"PROJECT_DEFAULT","isAssigneeTypeValid":false,"project":"MTC","projectId":10608},{"self":"https://my-jira.atlassian.net/rest/api/2/component/11665","id":"11665","name":"DACH
+      TT","assigneeType":"PROJECT_DEFAULT","realAssigneeType":"PROJECT_DEFAULT","isAssigneeTypeValid":false,"project":"MTC","projectId":10608},{"self":"https://my-jira.atlassian.net/rest/api/2/component/11676","id":"11676","name":"FinServ","assigneeType":"PROJECT_DEFAULT","realAssigneeType":"PROJECT_DEFAULT","isAssigneeTypeValid":false,"project":"MTC","projectId":10608},{"self":"https://my-jira.atlassian.net/rest/api/2/component/11675","id":"11675","name":"FR
+      TT","assigneeType":"PROJECT_DEFAULT","realAssigneeType":"PROJECT_DEFAULT","isAssigneeTypeValid":false,"project":"MTC","projectId":10608},{"self":"https://my-jira.atlassian.net/rest/api/2/component/11678","id":"11678","name":"IoT","assigneeType":"PROJECT_DEFAULT","realAssigneeType":"PROJECT_DEFAULT","isAssigneeTypeValid":false,"project":"MTC","projectId":10608},{"self":"https://my-jira.atlassian.net/rest/api/2/component/11677","id":"11677","name":"Media
+      & Entertainment","assigneeType":"PROJECT_DEFAULT","realAssigneeType":"PROJECT_DEFAULT","isAssigneeTypeValid":false,"project":"MTC","projectId":10608}]'
+    content_type: text/plain
+    method: GET
+    status: 200
+    url: https://my-jira.atlassian.net/rest/api/2/project/MTC/components
