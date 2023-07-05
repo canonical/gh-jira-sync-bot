@@ -29,7 +29,7 @@ test = [
     "pytest-cov",
     "mypy",
     "httpx",
-    "tox"
+    "tox",
 ]
 
 deploy = [
