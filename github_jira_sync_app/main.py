@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import logging
 import os
+from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
@@ -43,7 +44,7 @@ The internal ticket has been created: {jira_issue_link}.
 """
 
 
-with open("settings.yaml") as file:
+with open(Path(__file__).parent.parent / "settings.yaml") as file:
     DEFAULT_SETTINGS = yaml.safe_load(file)
 
 
@@ -122,7 +123,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if payload["sender"]["login"] == "syncronize-issues-to-jira[bot]":
         # do not handle bot's actions
-        return "ok"
+        return {"msg": "Action was triggered by bot. Ignoring."}
 
     if payload["action"] in ["deleted", "unlabeled"]:
         # do not handle deletion of comments/issues and unlabeling
