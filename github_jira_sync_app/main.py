@@ -135,7 +135,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     if not all(k in payload.keys() for k in ["action", "issue"]):
         return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
 
-    if payload["sender"]["login"] == os.getenv("BOT_NAME"):
+    if payload["sender"]["login"] == os.getenv("BOT_NAME", "syncronize-issues-to-jira[bot]"):
         return {"msg": "Action was triggered by bot. Ignoring."}
 
     if payload["action"] in ["deleted", "unlabeled"]:
