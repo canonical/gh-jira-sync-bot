@@ -17,6 +17,7 @@ from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
 from starlette.requests import Request
+from starlette.responses import Response
 from yaml.scanner import ScannerError
 
 jira_text_renderer = JIRARenderer()
@@ -88,6 +89,20 @@ git_integration = GithubIntegration(
 
 
 app = FastAPI()
+
+
+@app.middleware("http")
+async def catch_exceptions_middleware(request, call_next):
+    """Middleware to catch all exceptions.
+
+    All exceptions that were raised during handling of the request will be caught
+    and logged with the traceback, then 500 response will be returned to the user.
+    """
+    try:
+        return await call_next(request)
+    except Exception:
+        logger.exception("Exception occurred")
+        return Response("Internal server error", status_code=500)
 
 
 def merge_dicts(d1, d2):
@@ -186,7 +201,8 @@ async def bot(request: Request, payload: dict = Body(...)):
         logger.warning(msg)
         return {"msg": msg}
 
-    allowed_labels = [label.lower() for label in settings["labels"]]
+    labels = settings["labels"] or []
+    allowed_labels = [label.lower() for label in labels]
     payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
     if allowed_labels and not any(label in allowed_labels for label in payload_labels):
         msg = "Issue is not labeled with the specified label"
