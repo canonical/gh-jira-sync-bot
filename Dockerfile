@@ -3,7 +3,6 @@ LABEL org.opencontainers.image.source=https://github.com/canonical/gh-jira-sync-
 
 COPY ./pyproject.toml .
 COPY ./github_jira_sync_app ./github_jira_sync_app
-COPY ./settings.yaml .
 
 RUN apt-get update && \
     apt-get install -y python3.10 python3-pip && \
