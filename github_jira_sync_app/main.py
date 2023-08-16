@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-import json
 import logging
 import os
 from pathlib import Path
@@ -74,7 +73,7 @@ logger = define_logger()
 with open(Path(__file__).parent / "settings.yaml") as file:
     _file_settings = yaml.safe_load(file)
 
-_env_settings = json.loads(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
+_env_settings = yaml.safe_load(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
 
 DEFAULT_SETTINGS = _env_settings or _file_settings
 
