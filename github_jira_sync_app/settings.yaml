@@ -1,7 +1,6 @@
 settings:
   components:
   labels:
-    - jira
   add_gh_comment: false
   sync_description: true
   sync_comments: true
