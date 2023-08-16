@@ -149,7 +149,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     if not all(k in payload.keys() for k in ["action", "issue"]):
         return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
 
-    if payload["sender"]["login"] == os.getenv("BOT_NAME"):
+    if payload["sender"]["login"] == os.getenv("BOT_NAME", "syncronize-issues-to-jira[bot]"):
         return {"msg": "Action was triggered by bot. Ignoring."}
 
     if payload["action"] in ["deleted", "unlabeled"]:
@@ -201,7 +201,8 @@ async def bot(request: Request, payload: dict = Body(...)):
         logger.warning(msg)
         return {"msg": msg}
 
-    allowed_labels = [label.lower() for label in settings["labels"]]
+    labels = settings["labels"] or []
+    allowed_labels = [label.lower() for label in labels]
     payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
     if allowed_labels and not any(label in allowed_labels for label in payload_labels):
         msg = "Issue is not labeled with the specified label"
