@@ -174,14 +174,12 @@ async def bot(request: Request, payload: dict = Body(...)):
     except GithubException:
         msg = ".github/.jira_sync_config.yaml file was not found"
         logger.error(msg)
-        issue.create_comment(msg)
         return {"msg": msg}
 
     try:
         settings = yaml.safe_load(settings_content)
     except ScannerError:
         msg = ".github/.jira_sync_config.yaml file is invalid. Check syntax."
-        issue.create_comment(msg)
         logger.error(msg)
         return {"msg": msg}
 
@@ -191,13 +189,11 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if not settings["jira_project_key"]:
         msg = "Jira project key is not specified. Add `jira_project_key` key to the settings file."
-        issue.create_comment(msg)
         logger.warning(msg)
         return {"msg": msg}
 
     if not settings["status_mapping"]:
         msg = "Status mapping is not specified. Add `status_mapping` key to the settings file."
-        issue.create_comment(msg)
         logger.warning(msg)
         return {"msg": msg}
 
