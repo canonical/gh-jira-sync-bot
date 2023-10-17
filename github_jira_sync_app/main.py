@@ -149,6 +149,9 @@ async def bot(request: Request, payload: dict = Body(...)):
     if not all(k in payload.keys() for k in ["action", "issue"]):
         return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
 
+    if "pull_request" in payload["issue"]:
+        return {"msg": "Action was triggered by PR comment. Ignoring."}
+
     if payload["sender"]["login"] == os.getenv("BOT_NAME"):
         return {"msg": "Action was triggered by bot. Ignoring."}
 
