@@ -211,7 +211,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     jira_task_desc_match = f"This issue was created from GitHub Issue {issue.html_url}"
     existing_issues = jira.search_issues(
-        f'project={settings["jira_project_key"]} AND description ~""{jira_task_desc_match}""',
+        rf'project={settings["jira_project_key"]} AND description ~"\"{jira_task_desc_match}\""',
         json_result=False,
     )
     assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"

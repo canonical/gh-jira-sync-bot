@@ -27,5 +27,5 @@ responses:
     content_type: text/plain
     method: GET
     status: 200
-    url: https://my-jira.atlassian.net/rest/api/2/search?jql=project%3DMTC+AND+description+~%22%22This+issue+was+created+from+GitHub+Issue+https%3A%2F%2Fgithub.com%2Fbeliaev-maksim%2Ftest-ci%2Fissues%2F30%22%22&startAt=0&validateQuery=True&fields=%2Aall&maxResults=50
+    url: https://my-jira.atlassian.net/rest/api/2/search?jql=project%3DMTC+AND+description+~%22%5C%22This+issue+was+created+from+GitHub+Issue+https%3A%2F%2Fgithub.com%2Fbeliaev-maksim%2Ftest-ci%2Fissues%2F30%5C%22%22&startAt=0&validateQuery=True&fields=%2Aall&maxResults=50
 
