@@ -28,9 +28,7 @@ jira_instance_url = os.getenv("JIRA_INSTANCE", "")
 jira_username = os.getenv("JIRA_USERNAME", "")
 jira_token = os.getenv("JIRA_TOKEN", "")
 
-assert (
-    jira_instance_url
-), "URL to your Jira instance must be provided via JIRA_INSTANCE env var"
+assert jira_instance_url, "URL to your Jira instance must be provided via JIRA_INSTANCE env var"
 assert jira_username, "Jira username must be provided via JIRA_USERNAME env var"
 assert jira_token, "Jira API token must be provided via JIRA_TOKEN env var"
 
@@ -82,9 +80,7 @@ DEFAULT_SETTINGS = _env_settings or _file_settings
 
 app_id = os.getenv("APP_ID", "")
 app_key = os.getenv("PRIVATE_KEY", "")
-app_key = app_key.replace(
-    "\\n", "\n"
-)  # since docker env variables do not support multiline
+app_key = app_key.replace("\\n", "\n")  # since docker env variables do not support multiline
 
 git_integration = GithubIntegration(
     app_id,
@@ -135,13 +131,9 @@ def verify_signature(payload_body, secret_token, signature_header):
 
     """
     if not signature_header:
-        raise HTTPException(
-            status_code=403, detail="x-hub-signature-256 header is missing!"
-        )
+        raise HTTPException(status_code=403, detail="x-hub-signature-256 header is missing!")
 
-    hash_object = hmac.new(
-        secret_token.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256
-    )
+    hash_object = hmac.new(secret_token.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256)
     expected_signature = "sha256=" + hash_object.hexdigest()
     if not hmac.compare_digest(expected_signature, signature_header):
         raise HTTPException(status_code=403, detail="Request signatures didn't match!")
@@ -222,9 +214,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         f'project={settings["jira_project_key"]} AND description ~""{jira_task_desc_match}""',
         json_result=False,
     )
-    assert isinstance(
-        existing_issues, list
-    ), "Jira did not return a list of existing issues"
+    assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
     issue_body = issue.body if settings["sync_description"] else ""
     if issue_body:
         doc = Document(issue_body)
@@ -253,9 +243,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         issue_dict["parent"] = {"key": settings["epic_key"]}
 
     if settings["components"]:
-        allowed_components = [
-            c.name for c in jira.project_components(settings["jira_project_key"])
-        ]
+        allowed_components = [c.name for c in jira.project_components(settings["jira_project_key"])]
 
         issue_dict["components"] = [
             {"name": component}
@@ -268,9 +256,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if not existing_issues:
         if payload["action"] == "closed":
-            return {
-                "msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."
-            }
+            return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
 
         new_issue = jira.create_issue(fields=issue_dict)
         existing_issues.append(new_issue)
@@ -293,11 +279,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
             jira_issue.update(fields=issue_dict)
 
-    if (
-        settings["sync_comments"]
-        and payload["action"] == "created"
-        and "comment" in payload.keys()
-    ):
+    if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
 
         comment_body = payload["comment"]["body"]
