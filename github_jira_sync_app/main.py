@@ -269,8 +269,10 @@ async def bot(request: Request, payload: dict = Body(...)):
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
             jira.transition_issue(jira_issue, closed_status)
+            return {"msg": "Issue was closed in Jira"}
         elif payload["action"] == "reopened":
             jira.transition_issue(jira_issue, opened_status)
+            return {"msg": "Issue was transitioned in Jira to be reopened"}
         elif payload["action"] == "edited":
             if settings["components"]:
                 # need to append components to the existing list
