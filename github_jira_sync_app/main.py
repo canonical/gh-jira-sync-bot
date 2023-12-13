@@ -282,18 +282,24 @@ async def bot(request: Request, payload: dict = Body(...)):
             jira_issue.update(fields=issue_dict)
             return {"msg": "Issue in Jira was modified with the latest info from GitHub"}
 
-    if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
+    if payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
+        if settings["sync_comments"]:
+            comment_body = payload["comment"]["body"]
+            doc = Document(comment_body)
+            comment_body = jira_text_renderer.render(doc)
+            jira.add_comment(
+                existing_issues[0],
+                f"User *{payload['sender']['login']}* commented:\n {comment_body}",
+            )
+            return {"msg": "New comment from GitHub was added to Jira"}
+        else:
+            return {
+                "msg": "Action was triggered by comment, but config doesn't request it. Ignoring."
+            }
 
-        comment_body = payload["comment"]["body"]
-        doc = Document(comment_body)
-        comment_body = jira_text_renderer.render(doc)
-        jira.add_comment(
-            existing_issues[0],
-            f"User *{payload['sender']['login']}* commented:\n {comment_body}",
-        )
-        return {"msg": "New comment from GitHub was added to Jira"}
-
+    # if the action was triggered by other event (not issue create),
+    # we might not reach this return point, but the issue still will be created
     return {"msg": "Issue was created in Jira"}
 
 
