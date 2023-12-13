@@ -280,6 +280,7 @@ async def bot(request: Request, payload: dict = Body(...)):
                     issue_dict["components"].append({"name": component.name})
 
             jira_issue.update(fields=issue_dict)
+            return {"msg": "Issue in Jira was modified with the latest info from GitHub"}
 
     if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
