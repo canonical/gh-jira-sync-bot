@@ -51,6 +51,7 @@ settings:
 
 
 ## Server Configuration
+You need this section only if you deploy your own bot. However, even for this purpose I recommend to use https://github.com/canonical/charmed-gh-jira-sync-bot
 
 The following environment variables are required:  
 `APP_ID` - GitHub App ID  
