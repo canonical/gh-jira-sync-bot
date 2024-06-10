@@ -240,14 +240,15 @@ async def bot(request: Request, payload: dict = Body(...)):
         "issuetype": {"name": issue_type},
     }
 
-    # allow customization of JIRA issue summary field
-    # by using this field, use can format the JIRA summary with the values
-    # from the GH issue
-    # Examples:
-    # to use fixed title "github issue": "github issue"
-    # to use GH issue title: "{issue.title}"
-    # to add prefix "GitHub" : "GitHub {issue.title}"
-    # to add user in the title: "[issue.user.login] {issue.title}"
+    # Allow customization of JIRA issue's summary field
+    # By using this configuration field, use can format the summary with the values
+    # from the GH issue variable
+    #
+    # Examples of usage:
+    # - to use fixed title "github issue": "github issue"
+    # - to use GH issue title: "{issue.title}"
+    # - to add prefix "GitHub" : "GitHub {issue.title}"
+    # - to add user in the title: "[issue.user.login] {issue.title}"
     summary_str = settings.get("summary", "")
     if isinstance(summary_str, str) and summary_str:
         try:
