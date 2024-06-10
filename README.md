@@ -48,10 +48,14 @@ settings:
   label_mapping:
     enhancement: Story
 
-  # (Optional) JIRA issue's summary customization
-  # Allow to define the JIRA issue's summary and eventually format it with the values
-  # of the GH issue variable.
-  # See GH issue definition : https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28
+  # (Optional) JIRA issue's summary
+  # This field can be used to customize the JIRA issue's summary (title).
+  # The value of the field will be passed to the python
+  # format() method to generate the JIRA summary. The GH issue
+  # variable will be captured in the format() method so that users can
+  # use GH issue attribute's values to build the JIRA summary.
+  # See GH issue definition :
+  # https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28
   #
   # Examples:
   # to use fixed title "github issue": "github issue"
