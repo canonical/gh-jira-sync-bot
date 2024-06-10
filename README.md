@@ -57,7 +57,7 @@ settings:
   # to use fixed title "github issue": "github issue"
   # to use GH issue title: "{issue.title}"
   # to add prefix "[GitHub]" : "[GitHub] {issue.title}"
-  # to add user in the title: "[issue.user.login] {issue.title}"
+  # to add user in the title (between square brackets): "[{issue.user.login}] {issue.title}"
   summary: "{issue.title}"
 ```
 
