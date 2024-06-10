@@ -8,3 +8,4 @@ settings:
   jira_project_key:
   label_mapping:
   status_mapping:
+  summary: ""
