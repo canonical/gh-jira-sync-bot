@@ -249,7 +249,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     # to add prefix "GitHub" : "GitHub {issue.title}"
     # to add user in the title: "[issue.user.login] {issue.title}"
     summary_str = settings.get("summary", "")
-    if isinstance(summary_str, str) and summary_str != "":
+    if isinstance(summary_str, str) and summary_str:
         try:
             summary_str = settings["summary"].format(issue=issue)
             issue_dict["summary"] = summary_str
