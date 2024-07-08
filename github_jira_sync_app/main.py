@@ -248,7 +248,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     # - to use fixed title "github issue": "github issue"
     # - to use GH issue title: "{issue.title}"
     # - to add prefix "GitHub" : "GitHub {issue.title}"
-    # - to add user in the title: "[issue.user.login] {issue.title}"
+    # - to add user in the title: "[{issue.user.login}] {issue.title}"
     summary_str = settings.get("summary", "")
     if isinstance(summary_str, str) and summary_str:
         try:
