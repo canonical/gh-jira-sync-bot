@@ -11,4 +11,4 @@ responses:
     content_type: text/plain
     method: POST
     status: 201
-    url: https://my-jira.atlassian.net/rest/api/2/issue/MTC-365/comment
+    url: https://my-jira.atlassian.net/rest/api/2/issue/MTC-314/comment

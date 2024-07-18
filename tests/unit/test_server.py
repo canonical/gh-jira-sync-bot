@@ -44,10 +44,11 @@ def test_comment_created_by_bot(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_comment_created_by_user(signature_mock):
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
+    )
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_comment_created.yaml")
     response = client.post(
         "/",
@@ -55,9 +56,7 @@ def test_comment_created_by_user(signature_mock):
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "msg": "Issue was created in Jira. New comment from GitHub was added to Jira"
-    }
+    assert response.json() == {"msg": "New comment from GitHub was added to Jira"}
 
 
 @responses.activate(assert_all_requests_are_fired=True)
