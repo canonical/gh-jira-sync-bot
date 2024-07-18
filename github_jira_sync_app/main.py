@@ -254,6 +254,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     opened_status = settings["status_mapping"]["opened"]
     closed_status = settings["status_mapping"]["closed"]
 
+    msg = ""
     if not existing_issues:
         if payload["action"] == "closed":
             return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
@@ -265,12 +266,18 @@ async def bot(request: Request, payload: dict = Body(...)):
             issue.create_comment(
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
             )
+
+        # need this since we allow to sync issue on many actions. And if someone commented
+        # we first create a Jira issue, then create a comment
+        msg = "Issue was created in Jira. "
     else:
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
             jira.transition_issue(jira_issue, closed_status)
+            return {"msg": "Closed existing Jira Issue"}
         elif payload["action"] == "reopened":
             jira.transition_issue(jira_issue, opened_status)
+            return {"msg": "Reopened existing Jira Issue"}
         elif payload["action"] == "edited":
             if settings["components"]:
                 # need to append components to the existing list
@@ -278,6 +285,7 @@ async def bot(request: Request, payload: dict = Body(...)):
                     issue_dict["components"].append({"name": component.name})
 
             jira_issue.update(fields=issue_dict)
+            return {"msg": "Updated existing Jira Issue"}
 
     if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
@@ -289,9 +297,12 @@ async def bot(request: Request, payload: dict = Body(...)):
             existing_issues[0],
             f"User *{payload['sender']['login']}* commented:\n {comment_body}",
         )
-        return {"msg": "New comment from GitHub was added to Jira"}
+        return {"msg": msg + "New comment from GitHub was added to Jira"}
 
-    return {"msg": "Issue was created in Jira"}
+    if not msg:
+        return {"msg": "No action performed"}
+    else:
+        return {"msg": msg}
 
 
 if __name__ == "__main__":
