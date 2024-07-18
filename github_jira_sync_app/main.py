@@ -265,12 +265,16 @@ async def bot(request: Request, payload: dict = Body(...)):
             issue.create_comment(
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
             )
+
+        return {"msg": "Issue was created in Jira"}
     else:
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
             jira.transition_issue(jira_issue, closed_status)
+            return {"msg": "Closed existing Jira Issue"}
         elif payload["action"] == "reopened":
             jira.transition_issue(jira_issue, opened_status)
+            return {"msg": "Reopened existing Jira Issue"}
         elif payload["action"] == "edited":
             if settings["components"]:
                 # need to append components to the existing list
@@ -278,6 +282,7 @@ async def bot(request: Request, payload: dict = Body(...)):
                     issue_dict["components"].append({"name": component.name})
 
             jira_issue.update(fields=issue_dict)
+            return {"msg": "Updated existing Jira Issue"}
 
     if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
@@ -291,7 +296,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         )
         return {"msg": "New comment from GitHub was added to Jira"}
 
-    return {"msg": "Issue was created in Jira"}
+    return {"msg": "No action performed"}
 
 
 if __name__ == "__main__":

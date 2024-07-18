@@ -73,7 +73,47 @@ def test_issue_labeled_correct(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_created_with_label(signature_mock):
+    """Test the most common scenario when a bug is create on GitHub with the right label.
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo
+        4. Ensure that the issue on GitHub is label with the approved label
+        5. Authenticate in Jira
+        6. Validate via JQL that this issue does not exist in Jira
+        7. Create new issue in Jira
+    """
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_created_with_label.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Issue was created in Jira"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_created_with_label_for_existing_ticket(signature_mock):
+    """Test the scenario when a bug is created on GitHub with the right label
+    but the issue already exists in Jira.
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo
+        4. Ensure that the issue on GitHub is label with the approved label
+        5. Authenticate in Jira
+        6. Validate via JQL that this issue does not exist in Jira but receive one issue back
+        7. Do not perform any action
+    """
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
+    )
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     response = client.post(
@@ -82,7 +122,7 @@ def test_issue_created_with_label(signature_mock):
     )
 
     assert response.status_code == 200
-    assert response.json() == {"msg": "Issue was created in Jira"}
+    assert response.json() == {"msg": "No action performed"}
 
 
 @responses.activate(assert_all_requests_are_fired=True)
