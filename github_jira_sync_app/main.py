@@ -254,6 +254,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     opened_status = settings["status_mapping"]["opened"]
     closed_status = settings["status_mapping"]["closed"]
 
+    msg = ""
     if not existing_issues:
         if payload["action"] == "closed":
             return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
@@ -266,7 +267,9 @@ async def bot(request: Request, payload: dict = Body(...)):
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
             )
 
-        return {"msg": "Issue was created in Jira"}
+        # need this since we allow to sync issue on many actions. And if someone commented
+        # we first create a Jira issue, then create a comment
+        msg = "Issue was created in Jira. "
     else:
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
@@ -294,9 +297,12 @@ async def bot(request: Request, payload: dict = Body(...)):
             existing_issues[0],
             f"User *{payload['sender']['login']}* commented:\n {comment_body}",
         )
-        return {"msg": "New comment from GitHub was added to Jira"}
+        return {"msg": msg + "New comment from GitHub was added to Jira"}
 
-    return {"msg": "No action performed"}
+    if not msg:
+        return {"msg": "No action performed"}
+    else:
+        return {"msg": msg}
 
 
 if __name__ == "__main__":
