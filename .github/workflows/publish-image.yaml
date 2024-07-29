@@ -5,11 +5,13 @@ on:
     tags:
       - '*.*.*'
 
+permissions:
+  packages: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
     
     steps:
     - name: Check out the repository
@@ -39,12 +41,12 @@ jobs:
 
     - name: Build Docker image
       run: |
-        sudo docker buildx build -t github_jira_sync_app --output type=docker .
+        docker buildx build -t github_jira_sync_app --output type=docker .
 
     - name: Tag Docker image
       run: |
-        sudo docker tag github_jira_sync_app ghcr.io/canonical/gh-jira-sync-bot:${TAG}
+        docker tag github_jira_sync_app ghcr.io/canonical/gh-jira-sync-bot:${TAG}
 
     - name: Push Docker image
       run: |
-        sudo docker push ghcr.io/canonical/gh-jira-sync-bot:${TAG}
+        docker push ghcr.io/canonical/gh-jira-sync-bot:${TAG}
