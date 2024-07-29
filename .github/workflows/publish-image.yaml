@@ -39,14 +39,9 @@ jobs:
           exit 1
         fi
 
-    - name: Build Docker image
-      run: |
-        docker buildx build -t github_jira_sync_app --output type=docker .
-
-    - name: Tag Docker image
-      run: |
-        docker tag github_jira_sync_app ghcr.io/canonical/gh-jira-sync-bot:${TAG}
-
-    - name: Push Docker image
-      run: |
-        docker push ghcr.io/canonical/gh-jira-sync-bot:${TAG}
+    - name: Build and Push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        tags: ghcr.io/canonical/gh-jira-sync-bot:${{ env.TAG }}
+        push: true
