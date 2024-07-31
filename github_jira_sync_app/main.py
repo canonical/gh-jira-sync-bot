@@ -42,7 +42,7 @@ PLEASE KEEP ALL THE CONVERSATION ON GITHUB
 """
 
 gh_comment_body_template = """
-Thank you for reporting us your feedback!
+Thank you for reporting your feedback to us!
 
 The internal ticket has been created: {jira_issue_link}.
 
