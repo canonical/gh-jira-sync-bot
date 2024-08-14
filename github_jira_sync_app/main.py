@@ -254,6 +254,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     opened_status = settings["status_mapping"]["opened"]
     closed_status = settings["status_mapping"]["closed"]
+    not_planned_status = settings["status_mapping"].get("not_planned", closed_status)
 
     msg = ""
     if not existing_issues:
@@ -274,8 +275,12 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
-            jira.transition_issue(jira_issue, closed_status)
-            return {"msg": "Closed existing Jira Issue"}
+            if payload["issue"]["state_reason"] == "not_planned":
+                jira.transition_issue(jira_issue, not_planned_status)
+                return {"msg": "Closed existing Jira Issue as not planned"}
+            else:
+                jira.transition_issue(jira_issue, closed_status)
+                return {"msg": "Closed existing Jira Issue"}
         elif payload["action"] == "reopened":
             jira.transition_issue(jira_issue, opened_status)
             return {"msg": "Reopened existing Jira Issue"}
