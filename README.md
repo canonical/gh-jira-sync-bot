@@ -17,7 +17,12 @@ settings:
   # Dictionary mapping GitHub issue status to Jira issue status
   status_mapping:
     opened: Untriaged
-    closed: done 
+    closed: done
+    # (Optional) Use different status for GitHub issues closed as not planned (instead of closed as
+    # completed)
+    # https://github.blog/changelog/2022-03-10-the-new-github-issues-march-10th-update/#%F0%9F%95%B5%F0%9F%8F%BD%E2%99%80%EF%B8%8F-issue-closed-reasons
+    # If not specified, `closed` status will be used.
+    not_planned: rejected
     
   # (Optional) Jira project components that should be attached to the created issue
   # Component names are case-sensitive
