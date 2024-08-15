@@ -139,3 +139,37 @@ def test_issue_created_without_label(signature_mock):
 
     assert response.status_code == 200
     assert response.json() == {"msg": "Issue is not labeled with the specified label"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_closed_as_completed(signature_mock):
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_transition_issue.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_closed_as_completed.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Closed existing Jira Issue"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_closed_as_not_planned(signature_mock):
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_transition_issue.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_closed_as_not_planned.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Closed existing Jira Issue as not planned"}
