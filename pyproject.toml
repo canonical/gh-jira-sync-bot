@@ -11,8 +11,8 @@ description = "FastAPI server to serve GitHub bot that synchronizes issues from 
 dynamic = ["version"]
 
 dependencies = [
-    "fastapi==0.109.1",
-    "pyyaml==6.0.0",
+    "fastapi==0.115.6",
+    "pyyaml==6.0.2",
     "pygithub==1.59.0",
     "uvicorn[standard]==0.22.0",
     "load_dotenv==0.1.0",

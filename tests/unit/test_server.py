@@ -22,7 +22,7 @@ def _get_json(file_name):
 
 
 def test_hash_validation():
-    data_hash = "sha256=38be3341f7b03bb234534be165ce4444d52bd95e798f547cabb1622db3628caa"
+    data_hash = "sha256=7127498186b8a9b282a54b72a954151d98681416693e07ea46e3a3eb960ddb42"
     response = client.post(
         "/",
         json=_get_json("comment_created_by_bot.json"),
