@@ -1,5 +1,5 @@
 // https://docs.github.com/en/webhooks/using-webhooks/automatically-redelivering-failed-deliveries-for-a-github-app-webhook
-const { App } = require("octokit");
+import { App } from "octokit";
 
 //
 async function checkAndRedeliverWebhooks() {
