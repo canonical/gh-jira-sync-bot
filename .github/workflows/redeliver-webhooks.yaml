@@ -1,0 +1,36 @@
+name: Redeliver failed webhook deliveries
+
+# This workflow runs every hour or when manually triggered.
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+# This workflow will use the built in `GITHUB_TOKEN` to check out the repository contents. This grants `GITHUB_TOKEN` permission to do that.
+permissions:
+  contents: read
+
+#
+jobs:
+  redeliver-failed-deliveries:
+    name: Redeliver failed deliveries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo content
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      # This step installs the octokit library. The script that this workflow will run uses the octokit library.
+      - name: Install dependencies
+        run: npm install octokit
+
+      - name: Run script
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+        run: |
+          node .github/workflows/scripts/redeliver-failed-deliveries.js
