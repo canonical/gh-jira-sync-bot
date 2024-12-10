@@ -33,4 +33,4 @@ jobs:
           APP_ID: ${{ secrets.APP_ID }}
           PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         run: |
-          node .github/workflows/scripts/redeliver-failed-deliveries.js
+          node .github/workflows/scripts/redeliver-failed-deliveries.mjs
