@@ -4,16 +4,10 @@ from pathlib import Path
 
 import responses
 from dotenv import load_dotenv
-from fastapi.testclient import TestClient
 
 UNITTESTS_DIR = Path(__file__).parent
 load_dotenv(Path(__file__).parent / "dumm_env", verbose=True)
 assert os.environ["JIRA_INSTANCE"]
-
-# import only after we set dummy environment
-from github_jira_sync_app.main import app  # noqa: E402
-
-client = TestClient(app)
 
 
 def _get_json(file_name):
@@ -21,7 +15,7 @@ def _get_json(file_name):
         return json.load(file)
 
 
-def test_hash_validation():
+def test_hash_validation(client):
     data_hash = "sha256=7127498186b8a9b282a54b72a954151d98681416693e07ea46e3a3eb960ddb42"
     response = client.post(
         "/",
@@ -32,7 +26,7 @@ def test_hash_validation():
     assert response.status_code == 200
 
 
-def test_comment_created_by_bot(signature_mock):
+def test_comment_created_by_bot(client, signature_mock):
     response = client.post(
         "/",
         json=_get_json("comment_created_by_bot.json"),
@@ -43,7 +37,7 @@ def test_comment_created_by_bot(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_comment_created_by_user(signature_mock):
+def test_comment_created_by_user(client, signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
@@ -60,7 +54,7 @@ def test_comment_created_by_user(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_labeled_correct(signature_mock):
+def test_issue_labeled_correct(client, signature_mock):
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
@@ -75,7 +69,7 @@ def test_issue_labeled_correct(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_created_with_label(signature_mock):
+def test_issue_created_with_label(client, signature_mock):
     """Test the most common scenario when a bug is create on GitHub with the right label.
 
     Tests the following scenario:
@@ -101,7 +95,7 @@ def test_issue_created_with_label(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_created_with_label_for_existing_ticket(signature_mock):
+def test_issue_created_with_label_for_existing_ticket(client, signature_mock):
     """Test the scenario when a bug is created on GitHub with the right label
     but the issue already exists in Jira.
 
@@ -129,7 +123,7 @@ def test_issue_created_with_label_for_existing_ticket(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_created_without_label(signature_mock):
+def test_issue_created_without_label(client, signature_mock):
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_created_without_label.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
     response = client.post(
@@ -142,7 +136,7 @@ def test_issue_created_without_label(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_closed_as_completed(signature_mock):
+def test_issue_closed_as_completed(client, signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
@@ -159,7 +153,7 @@ def test_issue_closed_as_completed(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_closed_as_not_planned(signature_mock):
+def test_issue_closed_as_not_planned(client, signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
