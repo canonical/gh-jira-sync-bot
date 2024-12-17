@@ -6,5 +6,5 @@ GITHUB_CLIENT_SECRET=rezindkm3dod04h12yt8oktm8if51wtsfgljk04k
 JIRA_INSTANCE="https://my-jira.atlassian.net"
 JIRA_USERNAME=maksim.beliaev@canonical.com
 JIRA_TOKEN=mv38swy07r6ius3v90cffyi4
-DEFAULT_BOT_CONFIG='{"settings": {"components": null, "labels": ["jira"], "add_gh_comment": false, "sync_description": true, "sync_comments": true, "epic_key": null, "jira_project_key": null, "label_mapping": null, "status_mapping": null}}'
+DEFAULT_BOT_CONFIG='{"settings": {"components": null, "labels": ["jira"], "add_gh_comment": false, "add_gh_synced_label": false, "gh_synced_label_name": null, "sync_description": true, "sync_comments": true, "epic_key": null, "jira_project_key": null, "label_mapping": null, "status_mapping": null}}'
 BOT_NAME="syncronize-issues-to-jira[bot]"

@@ -14,6 +14,7 @@ from github import Github
 from github import GithubException
 from github import GithubIntegration
 from github import Issue
+from github import UnknownObjectException
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -293,14 +294,42 @@ async def bot(request: Request, payload: dict = Body(...)):
         new_issue = jira.create_issue(fields=issue_dict)
         existing_issues.append(new_issue)
 
+        misconfigured_gh_label_reason = ""
+
+        if settings["gh_synced_label_name"]:
+            gh_synced_label_name = settings["gh_synced_label_name"]
+
+            if gh_synced_label_name:
+                try:
+                    repo.get_label(gh_synced_label_name)
+                    issue.add_to_labels(gh_synced_label_name)
+                except UnknownObjectException:
+                    misconfigured_gh_label_reason = (
+                        " Warning: the specified GitHub label doesn't exist in the repo."
+                    )
+            else:
+                misconfigured_gh_label_reason = (
+                    " Warning: option gh_synced_label_name has not been set while"
+                    "gh_synced_label_name has."
+                )
+
         if settings["add_gh_comment"]:
-            gh_issue.create_comment(
-                gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
-            )
+            gh_comment_body = gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
+
+            if misconfigured_gh_label_reason:
+                gh_comment_body += "\n\n" + misconfigured_gh_label_reason
+
+            gh_issue.create_comment(gh_comment_body)
 
         # need this since we allow to sync issue on many actions. And if someone commented
         # we first create a Jira issue, then create a comment
         msg = "Issue was created in Jira. "
+
+        if misconfigured_gh_label_reason:
+            msg += (
+                "Comment added to GitHub issue because gh_synced_label_name "
+                "is not set, or does not exist in repo."
+            )
     else:
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
