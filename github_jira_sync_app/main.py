@@ -167,7 +167,7 @@ async def bot(request: Request, payload: dict = Body(...)):
             return {"msg": f"Action was triggered by Issue {payload['action']}. Ignoring."}
 
         if payload["action"] == "opened":
-            if "labels" in payload["issue"]:
+            if payload["issue"].get("labels", []):
                 return {
                     "msg": (
                         "Action was triggered by Issue Opened with Labels. "
