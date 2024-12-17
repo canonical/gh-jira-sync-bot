@@ -308,7 +308,7 @@ async def bot(request: Request, payload: dict = Body(...)):
                 logger.warning(nonexistent_gh_label_warning)
                 synced_label_absent_in_repo = True
 
-        if settings["add_gh_comment"]:
+        if settings["add_gh_comment"] or synced_label_absent_in_repo:
             gh_comment_body = gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
 
             if synced_label_absent_in_repo:
