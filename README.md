@@ -39,10 +39,9 @@ settings:
   # (Optional) (Default: false) Add a new comment in GitHub with a link to Jira created issue
   add_gh_comment: false
 
-  # (Optional) (Default: false) Add a 'synced-to-jira' label to newly created issues when a corresponding
-  # ticket is created in Jira. This is meant to replace the comment depending on project preferences,
-  # but comments will still be added if <add_gh_comment> is true.
-  # The 'synced-to-jira' label must already be present in the GitHub repo and will not be created by the bot.
+  # (Optional) (Default: false) Add a 'synced-to-jira' label to newly created issues once a
+  # corresponding ticket is successfully created in Jira.
+  # This label serves as confirmation that the issue sync process was completed successfully.
   add_gh_synced_label: false
   
   # (Optional) (Default: true) Synchronize issue description from GitHub to Jira

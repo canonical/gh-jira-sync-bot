@@ -277,7 +277,8 @@ def test_issue_created_and_sync_label_not_present(signature_mock):
         6. Validate via JQL that this issue does not exist in Jira
         7. Create new issue in Jira
         8. Try and validate that synced-to-jira label exists in repo
-        9. Label doesn't exist, nothing is done on the GitHub issue
+        9. Label doesn't exist, warning comment is added to GitHub issue even though
+           <add_gh_comment> is false
     """
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "auth_github_responses_sync_label_not_found.yaml"
