@@ -73,6 +73,7 @@ def test_issue_labeled_correct(signature_mock):
         7. Create new issue in Jira
     """
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
