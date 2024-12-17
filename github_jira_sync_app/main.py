@@ -155,11 +155,16 @@ async def bot(request: Request, payload: dict = Body(...)):
     if payload["sender"]["login"] == os.getenv("BOT_NAME"):
         return {"msg": "Action was triggered by bot. Ignoring."}
 
-    if payload["action"] in ["deleted", "unlabeled"]:
-        return {"msg": "Action was triggered by Issue unlabeling. Ignoring."}
-
-    if payload["action"] == "edited" and "comment" in payload.keys():
-        return {"msg": "Action was triggered by comment edit. Ignoring."}
+    if "comment" in payload.keys():
+        # validate issue_comment webhooks
+        if payload["action"] != "created" and "comment" in payload.keys():
+            return {
+                "msg": f"Action was triggered by Issue Comment '{payload['action']}'. Ignoring."
+            }
+    else:
+        # validate issue webhooks
+        if payload["action"] not in ["opened", "edited", "closed", "reopened", "labeled"]:
+            return {"msg": f"Action was triggered by Issue {payload['action']}. Ignoring."}
 
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
@@ -176,14 +181,14 @@ async def bot(request: Request, payload: dict = Body(...)):
         settings_content = contents.decoded_content  # type: ignore[union-attr]
     except GithubException:
         msg = ".github/.jira_sync_config.yaml file was not found"
-        logger.error(msg)
+        logger.error(f"{repo_name}: {msg}")
         return {"msg": msg}
 
     try:
         settings = yaml.safe_load(settings_content)
     except ScannerError:
         msg = ".github/.jira_sync_config.yaml file is invalid. Check syntax."
-        logger.error(msg)
+        logger.error(f"{repo_name}: {msg}")
         return {"msg": msg}
 
     merge_dicts(settings, DEFAULT_SETTINGS)
@@ -192,12 +197,12 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if not settings["jira_project_key"]:
         msg = "Jira project key is not specified. Add `jira_project_key` key to the settings file."
-        logger.warning(msg)
+        logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
     if not settings["status_mapping"]:
         msg = "Status mapping is not specified. Add `status_mapping` key to the settings file."
-        logger.warning(msg)
+        logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
     labels = settings["labels"] or []
@@ -205,7 +210,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
     if allowed_labels and not any(label in allowed_labels for label in payload_labels):
         msg = "Issue is not labeled with the specified label"
-        logger.warning(msg)
+        logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
