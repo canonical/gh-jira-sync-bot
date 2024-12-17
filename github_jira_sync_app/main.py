@@ -214,9 +214,11 @@ async def bot(request: Request, payload: dict = Body(...)):
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
+    gh_issue = Issue.Issue(repo._requester, {}, payload["issue"], completed=True)
+
     labels = settings["labels"] or []
-    allowed_labels = [label.lower() for label in labels]
-    payload_labels = [label["name"].lower() for label in payload["issue"]["labels"]]
+    allowed_labels = [str(label).lower() for label in labels]
+    payload_labels = [label.name.lower() for label in gh_issue.labels]
     if allowed_labels and not any(label in allowed_labels for label in payload_labels):
         msg = "Issue is not labeled with the specified label"
         logger.warning(f"{repo_name}: {msg}")
@@ -233,7 +235,6 @@ async def bot(request: Request, payload: dict = Body(...)):
     )
     assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
 
-    gh_issue = Issue.Issue(repo._requester, {}, payload["issue"], completed=True)
     issue_body = gh_issue.body if settings["sync_description"] else ""
     if issue_body:
         doc = Document(issue_body)
@@ -283,7 +284,6 @@ async def bot(request: Request, payload: dict = Body(...)):
         existing_issues.append(new_issue)
 
         if settings["add_gh_comment"]:
-            gh_issue = Issue.Issue(repo._requester, {}, payload["issue"], completed=True)
             gh_issue.create_comment(
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
             )
