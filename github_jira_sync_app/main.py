@@ -166,6 +166,15 @@ async def bot(request: Request, payload: dict = Body(...)):
         if payload["action"] not in ["opened", "edited", "closed", "reopened", "labeled"]:
             return {"msg": f"Action was triggered by Issue {payload['action']}. Ignoring."}
 
+        if payload["action"] == "opened":
+            if "labels" in payload["issue"]:
+                return {
+                    "msg": (
+                        "Action was triggered by Issue Opened with Labels. "
+                        "Ignoring as we receive a separate webhook for labelling."
+                    )
+                }
+
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
 
