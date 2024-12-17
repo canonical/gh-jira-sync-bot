@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from github import Github
 from github import GithubException
 from github import GithubIntegration
+from github import Issue
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -184,7 +185,6 @@ async def bot(request: Request, payload: dict = Body(...)):
         ).token
     )
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
-    issue = repo.get_issue(number=payload["issue"]["number"])
     try:
         contents = repo.get_contents(".github/.jira_sync_config.yaml")
         settings_content = contents.decoded_content  # type: ignore[union-attr]
@@ -223,21 +223,23 @@ async def bot(request: Request, payload: dict = Body(...)):
         return {"msg": msg}
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
-    jira_task_desc_match = f"This issue was created from GitHub Issue {issue.html_url}"
+    jira_task_desc_match = (
+        f"This issue was created from GitHub Issue {payload['issue']['html_url']}"
+    )
     existing_issues = jira.search_issues(
         rf'project="{settings["jira_project_key"]}" AND '
         + rf'description ~"\"{jira_task_desc_match}\""',
         json_result=False,
     )
     assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
-    issue_body = issue.body if settings["sync_description"] else ""
+    issue_body = payload["issue"]["body"] if settings["sync_description"] else ""
     if issue_body:
         doc = Document(issue_body)
         issue_body = jira_text_renderer.render(doc)
 
     issue_description = jira_issue_description_template.format(
-        gh_issue_url=issue.html_url,
-        gh_issue_author=issue.user.login,
+        gh_issue_url=payload["issue"]["html_url"],
+        gh_issue_author=payload["issue"]["user"]["login"],
         gh_issue_body=issue_body,
     )
 
@@ -250,7 +252,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     issue_dict: dict[str, Any] = {
         "project": {"key": settings["jira_project_key"]},
-        "summary": issue.title,
+        "summary": payload["issue"]["title"],
         "description": issue_description,
         "issuetype": {"name": issue_type},
     }
@@ -279,7 +281,8 @@ async def bot(request: Request, payload: dict = Body(...)):
         existing_issues.append(new_issue)
 
         if settings["add_gh_comment"]:
-            issue.create_comment(
+            gh_issue = Issue.Issue(repo._requester, {}, payload["issue"], completed=True)
+            gh_issue.create_comment(
                 gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
             )
 
