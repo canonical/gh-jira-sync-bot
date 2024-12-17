@@ -25,17 +25,17 @@ responses:
 # get content of .jira_sync_config.yaml to load the settings for the repo
 - response:
     auto_calculate_content_length: false
-    body: '{"name":".jira_sync_config.yaml","path":".github/.jira_sync_config.yaml","sha":"a1a8aab6de92fc3eed4211350200ada4a2405b9c","size":297,"url":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","html_url":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml","git_url":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","download_url":"https://raw.githubusercontent.com/beliaev-maksim/test-ci/master/.github/.jira_sync_config.yaml","type":"file","content":"c2V0dGluZ3M6CiAgY29tcG9uZW50czoKICAgIC0gSW9UCiAgICAtIERBQ0ggVFQKICBsYWJlbHM6CiAgICAtIGJ1ZwogICAgLSBjdXN0b20KICBhZGRfZ2hfY29tbWVudDogZmFsc2UKICBhZGRfZ2hfc3luY2VkX2xhYmVsOiB0cnVlCiAgZ2hfc3luY2VkX2xhYmVsX25hbWU6IFN5bmNlZAogIHN5bmNfZGVzY3JpcHRpb246IHRydWUKICBzeW5jX2NvbW1lbnRzOiB0cnVlCiAgZXBpY19rZXk6ICJNVEMtMjk2IgogIGppcmFfcHJvamVjdF9rZXk6ICJNVEMiCiAgc3RhdHVzX21hcHBpbmc6CiAgICBvcGVuZWQ6IFVudHJpYWdlZAogICAgY2xvc2VkOiBkb25lIAogIGxhYmVsX21hcHBpbmc6CiAgICBlbmhhbmNlbWVudDogU3RvcnkK","encoding":"base64","_links":{"self":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","git":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","html":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml"}}'
+    body: '{"name":".jira_sync_config.yaml","path":".github/.jira_sync_config.yaml","sha":"a1a8aab6de92fc3eed4211350200ada4a2405b9c","size":297,"url":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","html_url":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml","git_url":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","download_url":"https://raw.githubusercontent.com/beliaev-maksim/test-ci/master/.github/.jira_sync_config.yaml","type":"file","content":"c2V0dGluZ3M6CiAgY29tcG9uZW50czoKICAgIC0gSW9UCiAgICAtIERBQ0ggVFQKICBsYWJlbHM6CiAgICAtIGJ1ZwogICAgLSBjdXN0b20KICBhZGRfZ2hfY29tbWVudDogZmFsc2UKICBhZGRfZ2hfc3luY2VkX2xhYmVsOiB0cnVlCiAgc3luY19kZXNjcmlwdGlvbjogdHJ1ZQogIHN5bmNfY29tbWVudHM6IHRydWUKICBlcGljX2tleTogIk1UQy0yOTYiCiAgamlyYV9wcm9qZWN0X2tleTogIk1UQyIKICBzdGF0dXNfbWFwcGluZzoKICAgIG9wZW5lZDogVW50cmlhZ2VkCiAgICBjbG9zZWQ6IGRvbmUgCiAgbGFiZWxfbWFwcGluZzoKICAgIGVuaGFuY2VtZW50OiBTdG9yeQo=","encoding":"base64","_links":{"self":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","git":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","html":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml"}}'
     content_type: text/plain
     method: GET
     status: 200
     url: https://api.github.com:443/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml
 
-# get the <gh_synced_label_name> label from the repo
+# get the (nonexistent) synced-to-jira label from the repo
 - response:
     auto_calculate_content_length: false
     body: '{"message": "Not Found", "documentation_url": "https://docs.github.com/rest/issues/labels#get-a-label", "status": "404"}'
     content_type: text/plain
     method: GET
     status: 404
-    url: https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/Synced
+    url: https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/synced-to-jira

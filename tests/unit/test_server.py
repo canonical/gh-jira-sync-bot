@@ -245,8 +245,8 @@ def test_issue_created_and_sync_label_added(signature_mock):
         5. Authenticate in Jira
         6. Validate via JQL that this issue does not exist in Jira
         7. Create new issue in Jira
-        8. Validate that <gh_synced_label_name> label exists in repo
-        9. Add <gh_synced_label_name> label to the issue
+        8. Validate that synced-to-jira label exists in repo
+        9. Add synced-to-jira label to the issue
     """
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "auth_github_responses_sync_label.yaml"
@@ -265,8 +265,8 @@ def test_issue_created_and_sync_label_added(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_created_and_sync_label_not_present(signature_mock):
-    """Test when a bug is created on GitHub with the right label but <add_gh_synced_label> does not
-    exist in the repository
+    """Test when a bug is created on GitHub with the right label and <add_gh_synced_label> is set
+    but the 'synced-to-jira' label does not exist in the repository
 
     Tests the following scenario:
         1. Authenticate in GitHub
@@ -276,7 +276,7 @@ def test_issue_created_and_sync_label_not_present(signature_mock):
         5. Authenticate in Jira
         6. Validate via JQL that this issue does not exist in Jira
         7. Create new issue in Jira
-        8. Try and validate that <gh_synced_label_name> label exists in repo
+        8. Try and validate that synced-to-jira label exists in repo
         9. Label doesn't exist, nothing is done on the GitHub issue
     """
     responses._add_from_file(
@@ -292,7 +292,6 @@ def test_issue_created_and_sync_label_not_present(signature_mock):
 
     assert response.status_code == 200
     assert response.json() == {
-        "msg": "Issue was created in Jira. Comment added to GitHub issue "
-        "because gh_synced_label_name is not set, or does not exist"
-        " in repo."
+        "msg": "Issue was created in Jira. "
+        "Warning: 'synced-to-jira' label doesn't exist in the GitHub repo."
     }
