@@ -47,7 +47,8 @@ def test_comment_created_by_user(signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_comment_created.yaml")
     response = client.post(
@@ -73,7 +74,8 @@ def test_issue_labeled_correct(signature_mock):
         7. Create new issue in Jira
     """
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
     response = client.post(
@@ -118,7 +120,8 @@ def test_issue_labeled_for_existing_ticket(signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     response = client.post(
         "/",
@@ -132,7 +135,25 @@ def test_issue_labeled_for_existing_ticket(signature_mock):
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_created_without_label(signature_mock):
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_created_without_label.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_created_without_label.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Issue is not labeled with the specified label"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_created_without_label_and_no_config(signature_mock):
+    """Test when issue is created without a label and repo config doesn't require one."""
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_created_without_label.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "github_settings_without_labels.yaml"
+    )
     response = client.post(
         "/",
         json=_get_json("issue_created_without_label.json"),
@@ -147,7 +168,8 @@ def test_issue_closed_as_completed(signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_transition_issue.yaml")
     response = client.post(
@@ -164,7 +186,8 @@ def test_issue_closed_as_not_planned(signature_mock):
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
     )
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "auth_github_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_transition_issue.yaml")
     response = client.post(
