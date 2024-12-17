@@ -120,6 +120,17 @@ def merge_dicts(d1, d2):
             d1[key] = d2[key]
 
 
+def truncate_description(s):
+    """Jira has a limitation of 23000 characters for description. Truncate to avoid API error."""
+    if len(s) > 28000:
+        return (
+            s[:28000]
+            + "..."
+            + "\n Text exceeded Jira maximum length. Please see the original issue for details."
+        )
+    return s
+
+
 def verify_signature(payload_body, secret_token, signature_header):
     """Verify that the payload was sent from GitHub by validating SHA256.
 
@@ -235,6 +246,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     issue_body = gh_issue.body if settings["sync_description"] else ""
     if issue_body:
+        issue_body = truncate_description(issue_body)
         doc = Document(issue_body)
         issue_body = jira_text_renderer.render(doc)
 
