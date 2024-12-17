@@ -2,7 +2,7 @@
 responses:
 - response:
     auto_calculate_content_length: false
-    body: '{"name":".jira_sync_config.yaml","path":".github/.jira_sync_config.yaml","sha":"a1a8aab6de92fc3eed4211350200ada4a2405b9c","size":297,"url":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","html_url":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml","git_url":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","download_url":"https://raw.githubusercontent.com/beliaev-maksim/test-ci/master/.github/.jira_sync_config.yaml","type":"file","content":"c2V0dGluZ3M6CiAgY29tcG9uZW50czoKICAgIC0gSW9UCiAgICAtIERBQ0ggVFQKCiAgYWRkX2doX2NvbW1lbnQ6IGZhbHNlCiAgc3luY19kZXNjcmlwdGlvbjogdHJ1ZQogIHN5bmNfY29tbWVudHM6IHRydWUKICBlcGljX2tleTogIk1UQy0yOTYiCiAgamlyYV9wcm9qZWN0X2tleTogIk1UQyIKICBzdGF0dXNfbWFwcGluZzoKICAgIG9wZW5lZDogVW50cmlhZ2VkCiAgICBjbG9zZWQ6IGRvbmUgCiAgbGFiZWxfbWFwcGluZzoKICAgIGVuaGFuY2VtZW50OiBTdG9yeQo=","encoding":"base64","_links":{"self":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","git":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","html":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml"}}'
+    body: '{"name":".jira_sync_config.yaml","path":".github/.jira_sync_config.yaml","sha":"a1a8aab6de92fc3eed4211350200ada4a2405b9c","size":297,"url":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","html_url":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml","git_url":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","download_url":"https://raw.githubusercontent.com/beliaev-maksim/test-ci/master/.github/.jira_sync_config.yaml","type":"file","content":"c2V0dGluZ3M6CiAgY29tcG9uZW50czoKICAgIC0gSW9UCiAgICAtIERBQ0ggVFQKICBsYWJlbHM6CiAgYWRkX2doX2NvbW1lbnQ6IGZhbHNlCiAgc3luY19kZXNjcmlwdGlvbjogdHJ1ZQogIHN5bmNfY29tbWVudHM6IHRydWUKICBlcGljX2tleTogIk1UQy0yOTYiCiAgamlyYV9wcm9qZWN0X2tleTogIk1UQyIKICBzdGF0dXNfbWFwcGluZzoKICAgIG9wZW5lZDogVW50cmlhZ2VkCiAgICBjbG9zZWQ6IGRvbmUgCiAgbGFiZWxfbWFwcGluZzoKICAgIGVuaGFuY2VtZW50OiBTdG9yeQo=","encoding":"base64","_links":{"self":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=master","git":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/a1a8aab6de92fc3eed4211350200ada4a2405b9c","html":"https://github.com/beliaev-maksim/test-ci/blob/master/.github/.jira_sync_config.yaml"}}'
     content_type: text/plain
     method: GET
     status: 200
@@ -14,7 +14,7 @@ responses:
 #  components:
 #    - IoT
 #    - DACH TT
-#
+#  labels:
 #  add_gh_comment: false
 #  sync_description: true
 #  sync_comments: true

@@ -44,9 +44,8 @@ def test_comment_created_by_bot(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_comment_created_by_user(signature_mock):
-    responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
-    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_existing_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
@@ -117,9 +116,8 @@ def test_issue_labeled_for_existing_ticket(signature_mock):
         6. Validate via JQL that this issue does not exist in Jira but receive one issue back
         7. Do not perform any action
     """
-    responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
-    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_existing_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
@@ -148,26 +146,38 @@ def test_issue_created_without_label(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_created_without_label_and_no_config(signature_mock):
-    """Test when issue is created without a label and repo config doesn't require one."""
+    """Test when issue is created without a label and repo config doesn't require one.
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo
+        4. Authenticate in Jira
+        5. Validate via JQL that this issue does not exist in Jira
+        6. Create new issue
+    """
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_created_without_label.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+
     responses._add_from_file(
         UNITTESTS_DIR / "url_responses" / "github_settings_without_labels.yaml"
     )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
     response = client.post(
         "/",
         json=_get_json("issue_created_without_label.json"),
     )
 
     assert response.status_code == 200
-    assert response.json() == {"msg": "Issue is not labeled with the specified label"}
+    assert response.json() == {"msg": "Issue was created in Jira. "}
 
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_closed_as_completed(signature_mock):
-    responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
-    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_existing_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
@@ -183,9 +193,8 @@ def test_issue_closed_as_completed(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_closed_as_not_planned(signature_mock):
-    responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "issue_labeled_correct_for_existing_ticket.yaml"
-    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_existing_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
