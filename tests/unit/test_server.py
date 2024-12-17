@@ -194,7 +194,7 @@ def test_gh_comment_created(signature_mock):
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_add_comment.yaml")
     response = client.post(
         "/",
-        json=_get_json("issue_created_without_label.json"),
+        json=_get_json("issue_with_too_long_description.json"),
     )
 
     assert response.status_code == 200

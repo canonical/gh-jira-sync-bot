@@ -232,14 +232,16 @@ async def bot(request: Request, payload: dict = Body(...)):
         json_result=False,
     )
     assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
-    issue_body = payload["issue"]["body"] if settings["sync_description"] else ""
+
+    gh_issue = Issue.Issue(repo._requester, {}, payload["issue"], completed=True)
+    issue_body = gh_issue.body if settings["sync_description"] else ""
     if issue_body:
         doc = Document(issue_body)
         issue_body = jira_text_renderer.render(doc)
 
     issue_description = jira_issue_description_template.format(
-        gh_issue_url=payload["issue"]["html_url"],
-        gh_issue_author=payload["issue"]["user"]["login"],
+        gh_issue_url=gh_issue.html_url,
+        gh_issue_author=gh_issue.user.login,
         gh_issue_body=issue_body,
     )
 
@@ -252,7 +254,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     issue_dict: dict[str, Any] = {
         "project": {"key": settings["jira_project_key"]},
-        "summary": payload["issue"]["title"],
+        "summary": gh_issue.title,
         "description": issue_description,
         "issuetype": {"name": issue_type},
     }
