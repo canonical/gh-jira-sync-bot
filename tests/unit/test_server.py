@@ -231,3 +231,68 @@ def test_issue_closed_as_not_planned(signature_mock):
 
     assert response.status_code == 200
     assert response.json() == {"msg": "Closed existing Jira Issue as not planned"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_created_and_sync_label_added(signature_mock):
+    """Test when a bug is created on GitHub with the right label and <add_gh_synced_label> is set
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo
+        4. Ensure that the issue on GitHub is label with the approved label
+        5. Authenticate in Jira
+        6. Validate via JQL that this issue does not exist in Jira
+        7. Create new issue in Jira
+        8. Validate that <gh_synced_label_name> label exists in repo
+        9. Add <gh_synced_label_name> label to the issue
+    """
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "auth_github_responses_sync_label.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_created_with_label.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Issue was created in Jira. "}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_created_and_sync_label_not_present(signature_mock):
+    """Test when a bug is created on GitHub with the right label but <add_gh_synced_label> does not
+    exist in the repository
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo
+        4. Ensure that the issue on GitHub is label with the approved label
+        5. Authenticate in Jira
+        6. Validate via JQL that this issue does not exist in Jira
+        7. Create new issue in Jira
+        8. Try and validate that <gh_synced_label_name> label exists in repo
+        9. Label doesn't exist, nothing is done on the GitHub issue
+    """
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "auth_github_responses_sync_label_not_found.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_created_with_label.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "msg": "Issue was created in Jira. Comment added to GitHub issue "
+        "because gh_synced_label_name is not set, or does not exist"
+        " in repo."
+    }
