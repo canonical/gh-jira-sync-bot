@@ -61,7 +61,7 @@ def test_comment_created_by_user(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_labeled_correct(signature_mock):
-    """Test the scenario when a bug is created on GitHub and labeled with the right label.
+    """Test the scenario when an existing bug is labeled with the right label.
 
     Tests the following scenario:
         1. Authenticate in GitHub
