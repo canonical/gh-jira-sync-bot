@@ -157,7 +157,7 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     if "comment" in payload.keys():
         # validate issue_comment webhooks
-        if payload["action"] != "created" and "comment" in payload.keys():
+        if payload["action"] != "created":
             return {
                 "msg": f"Action was triggered by Issue Comment '{payload['action']}'. Ignoring."
             }
