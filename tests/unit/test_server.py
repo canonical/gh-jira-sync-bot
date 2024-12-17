@@ -105,7 +105,7 @@ def test_issue_created_with_label(signature_mock):
 
 @responses.activate(assert_all_requests_are_fired=True)
 def test_issue_labeled_for_existing_ticket(signature_mock):
-    """Test the scenario when a bug is created on GitHub with the right label
+    """Test the scenario when a bug is labeled with the right label
     but the issue already exists in Jira.
 
     Tests the following scenario:
