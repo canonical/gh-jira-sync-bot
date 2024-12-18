@@ -248,15 +248,20 @@ def test_issue_created_and_sync_label_added(signature_mock):
         8. Validate that synced-to-jira label exists in repo
         9. Add synced-to-jira label to the issue
     """
+
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "auth_github_responses_sync_label.yaml"
+        UNITTESTS_DIR / "url_responses" / "github_settings_with_gh_sync_label.yaml"
     )
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "github_responses_synced_label_exists.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
     response = client.post(
         "/",
-        json=_get_json("issue_created_with_label.json"),
+        json=_get_json("issue_created_without_label.json"),
     )
 
     assert response.status_code == 200
@@ -280,15 +285,19 @@ def test_issue_created_and_sync_label_not_present(signature_mock):
         9. Label doesn't exist, warning comment is added to GitHub issue even though
            <add_gh_comment> is false
     """
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
     responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "auth_github_responses_sync_label_not_found.yaml"
+        UNITTESTS_DIR / "url_responses" / "github_settings_with_gh_sync_label.yaml"
     )
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "github_responses_synced_label_notfound.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "issue_labeled_correct.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
     response = client.post(
         "/",
-        json=_get_json("issue_created_with_label.json"),
+        json=_get_json("issue_created_without_label.json"),
     )
 
     assert response.status_code == 200
