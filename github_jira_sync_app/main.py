@@ -303,7 +303,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         if settings["add_gh_synced_label"]:
             try:
                 repo.get_label(gh_synced_label_name)
-                issue.add_to_labels(gh_synced_label_name)
+                gh_issue.add_to_labels(gh_synced_label_name)
             except UnknownObjectException:
                 logger.warning(nonexistent_gh_label_warning)
                 synced_label_absent_in_repo = True

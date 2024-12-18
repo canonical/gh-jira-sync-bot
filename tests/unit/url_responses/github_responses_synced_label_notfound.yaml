@@ -1,0 +1,20 @@
+# this file is generated automatically via responses. Use _recorder.record()
+responses:
+# get the (nonexistent) synced-to-jira label from the repo
+- response:
+    auto_calculate_content_length: false
+    body: '{"message": "Not Found", "documentation_url": "https://docs.github.com/rest/issues/labels#get-a-label", "status": "404"}'
+    content_type: text/plain
+    method: GET
+    status: 404
+    url: https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/synced-to-jira
+
+# add comment to GitHub issue with warning about misconfiguration
+- response:
+      auto_calculate_content_length: false
+      body: >
+        {"id":1,"node_id":"MDEyOklzc3VlQ29tbWVudDE=","url":"https://api.github.com:443/repos/beliaev-maksim/test-ci/issues/comments/12345","html_url":"https://github.com/beliaev-maksim/test-ci/issues/30#issuecomment-12345","body":"Thank you for reporting your feedback to us!\n\nThe internal ticket has been created:{jira_issue_link}.\n\n>This message was auto generated\n\nWarning: 'synced-to-jira' label doesn't exist in the GitHub repo.","user":{"login":"beliaev-maksim","id":51964909,"node_id":"MDQ6VXNlcjUxOTY0OTA5","avatar_url":"https://avatars.githubusercontent.com/u/51964909?v=4","gravatar_id":"","url":"https://api.github.com/users/beliaev-maksim","html_url":"https://github.com/beliaev-maksim","followers_url":"https://api.github.com/users/beliaev-maksim/followers","following_url":"https://api.github.com/users/beliaev-maksim/following{/other_user}","gists_url":"https://api.github.com/users/beliaev-maksim/gists{/gist_id}","starred_url":"https://api.github.com/users/beliaev-maksim/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/beliaev-maksim/subscriptions","organizations_url":"https://api.github.com/users/beliaev-maksim/orgs","repos_url":"https://api.github.com/users/beliaev-maksim/repos","events_url":"https://api.github.com/users/beliaev-maksim/events{/privacy}","received_events_url":"https://api.github.com/users/beliaev-maksim/received_events","type":"User","site_admin":false},"created_at":"2011-04-14T16:00:49Z","updated_at":"2011-04-14T16:00:49Z","issue_url":"https://api.github.com:443/repos/beliaev-maksim/test-ci/issues/30","author_association":"COLLABORATOR"}
+      content_type: text/plain
+      method: POST
+      status: 201
+      url: https://api.github.com:443/repos/beliaev-maksim/test-ci/issues/30/comments

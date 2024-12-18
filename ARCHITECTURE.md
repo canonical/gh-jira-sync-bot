@@ -15,6 +15,7 @@ sequenceDiagram
     App->>Jira: Searches for existing Jira issues
     Jira->>App: Provides list of existing issues if any
     App->>Jira: Creates/updates Jira issue
+    App->>repo: (Optional) Adds 'synced-to-jira' on the Issue
     App->>repo: (Optional) Adds a comment on the Issue
     App->>GH: Returns web response
 
