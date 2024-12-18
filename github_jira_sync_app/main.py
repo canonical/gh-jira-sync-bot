@@ -14,7 +14,6 @@ from github import Github
 from github import GithubException
 from github import GithubIntegration
 from github import Issue
-from github import UnknownObjectException
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -300,11 +299,10 @@ async def bot(request: Request, payload: dict = Body(...)):
 
         synced_label_absent_in_repo = False
 
-        if settings["add_gh_synced_label"]:
+        if settings.get("add_gh_synced_label", False):
             try:
-                repo.get_label(gh_synced_label_name)
                 gh_issue.add_to_labels(gh_synced_label_name)
-            except UnknownObjectException:
+            except GithubException:
                 logger.warning(nonexistent_gh_label_warning)
                 synced_label_absent_in_repo = True
 

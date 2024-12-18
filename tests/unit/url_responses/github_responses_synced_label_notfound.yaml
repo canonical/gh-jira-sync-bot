@@ -1,14 +1,14 @@
 # this file is generated automatically via responses. Use _recorder.record()
 responses:
-# get the (nonexistent) synced-to-jira label from the repo
 - response:
     auto_calculate_content_length: false
-    body: '{"message": "Not Found", "documentation_url": "https://docs.github.com/rest/issues/labels#get-a-label", "status": "404"}'
+    # this body is not accurate and requires capturing a real call
+    body: '[{"id":208045946,"node_id":"MDU6TGFiZWwyMDgwNDU5NDY=","url":"https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/synced-to-jira","name":"synced-to-jira","description":"TicketinJirahasbeencreatedforthisissue","color":"f29513","default":false}]'
     content_type: text/plain
-    method: GET
-    status: 404
-    url: https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/synced-to-jira
-
+    method: POST
+    # this error code is provisional
+    status: 422
+    url: https://api.github.com:443/repos/beliaev-maksim/test-ci/issues/30/labels
 # add comment to GitHub issue with warning about misconfiguration
 - response:
       auto_calculate_content_length: false
