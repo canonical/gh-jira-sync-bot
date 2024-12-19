@@ -234,7 +234,7 @@ def test_issue_closed_as_not_planned(signature_mock):
 
 
 @responses.activate(assert_all_requests_are_fired=True)
-def test_issue_created_and_sync_label_added(signature_mock):
+def test_issue_created_and_synced_label(signature_mock):
     """Test when a bug is created on GitHub with the right label and <add_gh_synced_label> is set
 
     Tests the following scenario:
@@ -245,8 +245,8 @@ def test_issue_created_and_sync_label_added(signature_mock):
         5. Authenticate in Jira
         6. Validate via JQL that this issue does not exist in Jira
         7. Create new issue in Jira
-        8. Validate that synced-to-jira label exists in repo
-        9. Add synced-to-jira label to the issue
+        8. Add synced-to-jira label to the issue. If it doesn't exist it is created
+           automatically by GitHub and then added
     """
 
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
@@ -254,7 +254,7 @@ def test_issue_created_and_sync_label_added(signature_mock):
         UNITTESTS_DIR / "url_responses" / "github_settings_with_gh_sync_label.yaml"
     )
     responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "github_responses_synced_label_exists.yaml"
+        UNITTESTS_DIR / "url_responses" / "github_responses_add_synced_label.yaml"
     )
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
@@ -266,42 +266,3 @@ def test_issue_created_and_sync_label_added(signature_mock):
 
     assert response.status_code == 200
     assert response.json() == {"msg": "Issue was created in Jira. "}
-
-
-@responses.activate(assert_all_requests_are_fired=True)
-def test_issue_created_and_sync_label_not_present(signature_mock):
-    """Test when a bug is created on GitHub with the right label and <add_gh_synced_label> is set
-    but the 'synced-to-jira' label does not exist in the repository
-
-    Tests the following scenario:
-        1. Authenticate in GitHub
-        2. Get issue from GitHub
-        3. Get content of .jira_sync_config.yaml from GitHub repo
-        4. Ensure that the issue on GitHub is label with the approved label
-        5. Authenticate in Jira
-        6. Validate via JQL that this issue does not exist in Jira
-        7. Create new issue in Jira
-        8. Try and validate that synced-to-jira label exists in repo
-        9. Label doesn't exist, warning comment is added to GitHub issue even though
-           <add_gh_comment> is false
-    """
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
-    responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "github_settings_with_gh_sync_label.yaml"
-    )
-    responses._add_from_file(
-        UNITTESTS_DIR / "url_responses" / "github_responses_synced_label_notfound.yaml"
-    )
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
-    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
-    response = client.post(
-        "/",
-        json=_get_json("issue_created_without_label.json"),
-    )
-
-    assert response.status_code == 200
-    assert response.json() == {
-        "msg": "Issue was created in Jira. "
-        "Warning: 'synced-to-jira' label doesn't exist in the GitHub repo."
-    }

@@ -52,8 +52,6 @@ The internal ticket has been created: {jira_issue_link}.
 
 gh_synced_label_name = "synced-to-jira"
 
-nonexistent_gh_label_warning = f"'{gh_synced_label_name}' label doesn't exist in the GitHub repo."
-
 
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
@@ -297,30 +295,17 @@ async def bot(request: Request, payload: dict = Body(...)):
         new_issue = jira.create_issue(fields=issue_dict)
         existing_issues.append(new_issue)
 
-        synced_label_absent_in_repo = False
-
         if settings.get("add_gh_synced_label", False):
-            try:
-                gh_issue.add_to_labels(gh_synced_label_name)
-            except GithubException:
-                logger.warning(nonexistent_gh_label_warning)
-                synced_label_absent_in_repo = True
+            gh_issue.add_to_labels(gh_synced_label_name)
 
-        if settings["add_gh_comment"] or synced_label_absent_in_repo:
+        if settings["add_gh_comment"]:
             gh_comment_body = gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
-
-            if synced_label_absent_in_repo:
-                gh_comment_body += "\n\nWarning: " + nonexistent_gh_label_warning
 
             gh_issue.create_comment(gh_comment_body)
 
         # need this since we allow to sync issue on many actions. And if someone commented
         # we first create a Jira issue, then create a comment
         msg = "Issue was created in Jira. "
-
-        # Add warning to response in case of label setting misconfiguration
-        if synced_label_absent_in_repo:
-            msg += "Warning: " + nonexistent_gh_label_warning
     else:
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
