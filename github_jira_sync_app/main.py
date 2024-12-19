@@ -189,6 +189,15 @@ async def bot(request: Request, payload: dict = Body(...)):
                     )
                 }
 
+        if payload["action"] == "labeled":
+            if payload["label"]["name"] == gh_synced_label_name:
+                return {
+                    "msg": (
+                        f"Action was triggered by Issue being labeled with {gh_synced_label_name}."
+                        " Purposefully ignored as caused by this bot."
+                    )
+                }
+
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
 

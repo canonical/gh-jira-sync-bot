@@ -247,6 +247,8 @@ def test_issue_created_and_synced_label(signature_mock):
         7. Create new issue in Jira
         8. Add synced-to-jira label to the issue. If it doesn't exist it is created
            automatically by GitHub and then added
+        9. The new webhook sent by GitHub for labeling the Issue with synced-to-jira
+           is immediately ignored
     """
 
     responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
@@ -266,3 +268,13 @@ def test_issue_created_and_synced_label(signature_mock):
 
     assert response.status_code == 200
     assert response.json() == {"msg": "Issue was created in Jira. "}
+
+    response = client.post("/", json=_get_json("issue_labeled_synced_to_jira.json"))
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "msg": (
+            "Action was triggered by Issue being labeled with synced-to-jira. "
+            "Purposefully ignored as caused by this bot."
+        )
+    }

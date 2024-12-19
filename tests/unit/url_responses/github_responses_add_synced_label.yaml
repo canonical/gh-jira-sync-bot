@@ -3,7 +3,7 @@ responses:
 # add the synced-to-jira label to the new issue
 - response:
     auto_calculate_content_length: false
-    body: '[{"id":208045946,"node_id":"MDU6TGFiZWwyMDgwNDU5NDY=","url":"https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/synced-to-jira","name":"synced-to-jira","description":"TicketinJirahasbeencreatedforthisissue","color":"f29513","default":false}]'
+    body: '[{"id":208045946,"node_id":"MDU6TGFiZWwyMDgwNDU5NDY=","url":"https://api.github.com:443/repos/beliaev-maksim/test-ci/labels/synced-to-jira","name":"synced-to-jira","description":"Ticket in Jira has been created for this issue","color":"f29513","default":false}]'
     content_type: text/plain
     method: POST
     status: 200
