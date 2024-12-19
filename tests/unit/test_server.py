@@ -231,3 +231,50 @@ def test_issue_closed_as_not_planned(signature_mock):
 
     assert response.status_code == 200
     assert response.json() == {"msg": "Closed existing Jira Issue as not planned"}
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_created_and_synced_label(signature_mock):
+    """Test when a bug is created on GitHub with the right label and <add_gh_synced_label> is set
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo
+        4. Ensure that the issue on GitHub is label with the approved label
+        5. Authenticate in Jira
+        6. Validate via JQL that this issue does not exist in Jira
+        7. Create new issue in Jira
+        8. Add synced-to-jira label to the issue. If it doesn't exist it is created
+           automatically by GitHub and then added
+        9. The new webhook sent by GitHub for labeling the Issue with synced-to-jira
+           is immediately ignored
+    """
+
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "github_settings_with_gh_sync_label.yaml"
+    )
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "github_responses_add_synced_label.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_no_issues.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_create_issue.yaml")
+    response = client.post(
+        "/",
+        json=_get_json("issue_created_without_label.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Issue was created in Jira. "}
+
+    response = client.post("/", json=_get_json("issue_labeled_synced_to_jira.json"))
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "msg": (
+            "Action was triggered by Issue being labeled with synced-to-jira. "
+            "Purposefully ignored as caused by this bot."
+        )
+    }

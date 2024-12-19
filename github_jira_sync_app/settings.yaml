@@ -2,6 +2,7 @@ settings:
   components:
   labels:
   add_gh_comment: false
+  add_gh_synced_label: false
   sync_description: true
   sync_comments: true
   epic_key:
