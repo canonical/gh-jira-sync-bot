@@ -15,7 +15,7 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media
-venv
+venv*
 admin
 grappelli
 rest_framework

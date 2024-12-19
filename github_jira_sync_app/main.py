@@ -14,6 +14,7 @@ from github import Github
 from github import GithubException
 from github import GithubIntegration
 from github import Issue
+from github.Repository import Repository
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -206,7 +207,8 @@ async def bot(request: Request, payload: dict = Body(...)):
             git_integration.get_repo_installation(owner, repo_name).id
         ).token
     )
-    repo = git_connection.get_repo(f"{owner}/{repo_name}")
+    repo = Repository(git_connection._Github__requester, {}, payload["repository"], completed=True)
+    repo_name = f"{owner}/{repo_name}"
     try:
         contents = repo.get_contents(".github/.jira_sync_config.yaml")
         settings_content = contents.decoded_content  # type: ignore[union-attr]
