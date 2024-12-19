@@ -13,7 +13,8 @@ from fastapi import HTTPException
 from github import Github
 from github import GithubException
 from github import GithubIntegration
-from github import Issue
+from github.Issue import Issue
+from github.Repository import Repository
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -206,7 +207,8 @@ async def bot(request: Request, payload: dict = Body(...)):
             git_integration.get_repo_installation(owner, repo_name).id
         ).token
     )
-    repo = git_connection.get_repo(f"{owner}/{repo_name}")
+    repo = Repository(git_connection.requester, {}, payload["repository"], completed=True)
+    repo_name = f"{owner}/{repo_name}"
     try:
         contents = repo.get_contents(".github/.jira_sync_config.yaml")
         settings_content = contents.decoded_content  # type: ignore[union-attr]
@@ -236,7 +238,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
-    gh_issue = Issue.Issue(repo._requester, {}, payload["issue"], completed=True)
+    gh_issue = Issue(git_connection.requester, {}, payload["issue"], completed=True)
 
     labels = settings["labels"] or []
     allowed_labels = [str(label).lower() for label in labels]
