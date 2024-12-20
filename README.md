@@ -67,8 +67,21 @@ The following environment variables are required:
 `APP_ID` - GitHub App ID  
 `PRIVATE_KEY` - GitHub App private key  
 `WEBHOOK_SECRET` - GitHub App webhook secret  
-`GITHUB_CLIENT_ID` - GitHub OAuth App client ID  
-`GITHUB_CLIENT_SECRET` - GitHub OAuth App client secret  
 `JIRA_INSTANCE` - Jira instance URL  
 `JIRA_USERNAME` - Jira username  
 `JIRA_TOKEN` - Jira API token  
+
+## GitHub App installation
+This app is meant to be installed as a GitHub application.  
+
+1. [Register a new GitHub app](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app).  
+2. Make sure to:  
+   - Generate a private key for the app.  
+   - Set up a webhook secret.  
+   - Add these repository permissions:  
+     - Issues: read and write  
+     - Metadata: read-only  
+     - Single file: read-only (Path: `.github/.jira_sync_config.yaml`)  
+   - Subscribe to these events:  
+     - Issues  
+     - Issue comments  
