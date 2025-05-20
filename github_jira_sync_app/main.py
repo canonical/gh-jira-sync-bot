@@ -266,7 +266,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         dedup_key = f"jira:create:{gh_issue.html_url}"
         if redis_client.setnx(dedup_key, "1"):
             # set expiration to 20 seconds
-            await redis_client.expire(dedup_key, 20)
+            redis_client.expire(dedup_key, 20)
         else:
             msg = "This issue is already being processed. Ignoring."
             logger.warning(f"{repo_name}: {msg}")
@@ -343,10 +343,10 @@ async def bot(request: Request, payload: dict = Body(...)):
         msg = "Issue was created in Jira. "
 
         if redis_client:
-            await redis_client.delete(dedup_key)
+            redis_client.delete(dedup_key)
     else:
         if redis_client:
-            await redis_client.delete(dedup_key)
+            redis_client.delete(dedup_key)
 
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
