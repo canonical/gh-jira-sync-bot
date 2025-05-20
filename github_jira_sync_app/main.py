@@ -94,6 +94,20 @@ git_integration = GithubIntegration(
 
 app = FastAPI()
 
+redis_host = os.getenv("REDIS_HOST", "")
+redis_port = os.getenv("REDIS_PORT", "")
+redis_client = None
+if redis_host:
+    import redis
+
+    redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
+    try:
+        redis_client.ping()
+        logger.info("Redis connection established")
+    except redis.ConnectionError:
+        logger.error("Redis connection error. Redis is not available.")
+        redis_client = None
+
 
 @app.middleware("http")
 async def catch_exceptions_middleware(request, call_next):
@@ -248,6 +262,16 @@ async def bot(request: Request, payload: dict = Body(...)):
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
+    if redis_client:
+        dedup_key = f"jira:create:{gh_issue.html_url}"
+        if redis_client.setnx(dedup_key, "1"):
+            # set expiration to 20 seconds
+            await redis_client.expire(dedup_key, 20)
+        else:
+            msg = "This issue is already being processed. Ignoring."
+            logger.warning(f"{repo_name}: {msg}")
+            return {"msg": msg}
+
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     jira_task_desc_match = f"This issue was created from GitHub Issue {gh_issue.html_url}"
     existing_issues = jira.search_issues(
@@ -317,7 +341,13 @@ async def bot(request: Request, payload: dict = Body(...)):
         # need this since we allow to sync issue on many actions. And if someone commented
         # we first create a Jira issue, then create a comment
         msg = "Issue was created in Jira. "
+
+        if redis_client:
+            await redis_client.delete(dedup_key)
     else:
+        if redis_client:
+            await redis_client.delete(dedup_key)
+
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
             if payload["issue"]["state_reason"] == "not_planned":
