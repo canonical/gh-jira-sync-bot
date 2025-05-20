@@ -265,10 +265,10 @@ async def bot(request: Request, payload: dict = Body(...)):
     if redis_client:
         dedup_key = f"jira:create:{gh_issue.html_url}"
         if redis_client.setnx(dedup_key, "1"):
-            # set expiration to 1 min
-            await redis_client.expire(dedup_key, 60)
+            # set expiration to 20 seconds
+            await redis_client.expire(dedup_key, 20)
         else:
-            msg = "This issue was already processed. Ignoring."
+            msg = "This issue is already being processed. Ignoring."
             logger.warning(f"{repo_name}: {msg}")
             return {"msg": msg}
 
