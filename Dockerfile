@@ -2,6 +2,7 @@ from --platform=$BUILDPLATFORM ubuntu:22.04
 LABEL org.opencontainers.image.source=https://github.com/canonical/gh-jira-sync-bot
 
 COPY ./pyproject.toml .
+COPY ./LICENSE .
 COPY ./github_jira_sync_app ./github_jira_sync_app
 
 RUN apt-get update && \
