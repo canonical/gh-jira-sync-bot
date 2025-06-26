@@ -1,3 +1,9 @@
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.metrics import set_meter_provider, get_meter_provider
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from prometheus_client import make_asgi_app
+from starlette.middleware.wsgi import WSGIMiddleware
+
 import hashlib
 import hmac
 import logging
@@ -53,6 +59,20 @@ The internal ticket has been created: {jira_issue_link}.
 
 gh_synced_label_name = "synced-to-jira"
 
+prometheus_reader = PrometheusMetricReader()
+provider = MeterProvider(metric_readers=[prometheus_reader])
+set_meter_provider(provider)
+meter = get_meter_provider().get_meter("sync-bot")
+
+# Define metrics
+request_counter = meter.create_counter(
+    "syncbot_requests_total",
+    description="Total number of sync bot requests"
+)
+error_counter = meter.create_counter(
+    "syncbot_errors_total",
+    description="Total number of internal errors"
+)
 
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
@@ -94,6 +114,20 @@ git_integration = GithubIntegration(
 
 app = FastAPI()
 
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
+
+# New test counter
+test_counter = meter.create_counter(
+    "syncbot_test_requests_total",
+    description="Number of times the /test endpoint was called"
+)
+
+@app.get("/test")
+async def test_endpoint():
+    test_counter.add(1)
+    return {"msg": "Test endpoint hit!"}
+
 redis_host = os.getenv("REDIS_HOST", "")
 redis_port = os.getenv("REDIS_PORT", "")
 redis_client = None
@@ -111,14 +145,19 @@ if redis_host:
 
 @app.middleware("http")
 async def catch_exceptions_middleware(request, call_next):
-    """Middleware to catch all exceptions.
-
-    All exceptions that were raised during handling of the request will be caught
-    and logged with the traceback, then 500 response will be returned to the user.
-    """
     try:
-        return await call_next(request)
+        response = await call_next(request)
+        request_counter.add(1, attributes={
+            "path": request.url.path,
+            "method": request.method,
+            "status_code": response.status_code,
+        })
+        return response
     except Exception:
+        error_counter.add(1, attributes={
+            "path": request.url.path,
+            "method": request.method,
+        })
         logger.exception("Exception occurred")
         return Response("Internal server error", status_code=500)
 
