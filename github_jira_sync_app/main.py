@@ -22,7 +22,8 @@ from starlette.requests import Request
 from starlette.responses import Response
 from yaml.scanner import ScannerError
 
-from instrumentation.metrics import add_metrics
+from instrumentation.metrics import setup_metrics
+from instrumentation.tracing import setup_tracing
 
 jira_text_renderer = JIRARenderer()
 
@@ -96,7 +97,8 @@ git_integration = GithubIntegration(
 
 app = FastAPI()
 
-add_metrics(app)
+metrics_instruments = setup_metrics(app)
+tracer = setup_tracing(app)
 
 redis_host = os.getenv("REDIS_HOST", "")
 redis_port = os.getenv("REDIS_PORT", "")
@@ -389,7 +391,12 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         return {"msg": msg}
 
-
+@app.get("/test")
+async def test_endpoint():
+    metrics_instruments["test_counter"].add(1)
+    with tracer.start_as_current_span("manual-test-span"):
+        return {"msg": "Test endpoint hit!"}
+        
 if __name__ == "__main__":
     import uvicorn
 
