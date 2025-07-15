@@ -20,6 +20,9 @@ from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
 from starlette.requests import Request
 from starlette.responses import Response
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from yaml.scanner import ScannerError
 
 from instrumentation.metrics import setup_metrics
@@ -97,6 +100,8 @@ git_integration = GithubIntegration(
 app = FastAPI()
 
 metrics_instruments = setup_metrics(app)
+request_counter = metrics_instruments["request_counter"]
+error_counter = metrics_instruments["error_counter"]
 
 redis_host = os.getenv("REDIS_HOST", "")
 redis_port = os.getenv("REDIS_PORT", "")
@@ -389,10 +394,28 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         return {"msg": msg}
 
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    # Increment total request counter
+
+    try:
+        response = await call_next(request)
+        request_counter.add(1)
+        # If the response status code is 500, increment error counter
+        if response.status_code == 500:
+            error_counter.add(1)
+
+        return response
+    except Exception as e:
+        # Unhandled exception - treated as 500
+        error_counter.add(1)
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+    
 @app.get("/test")
 async def test_endpoint():
     metrics_instruments["test_counter"].add(1)
-    return {"msg": "Test endpoint hit!"}
+    #return {"msg": "Test endpoint hit!"}
+    raise Exception("Simulated internal server error")
         
 if __name__ == "__main__":
     import uvicorn
