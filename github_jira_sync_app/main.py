@@ -127,8 +127,8 @@ async def catch_exceptions_middleware(request, call_next):
     """
     try:
         return await call_next(request)
-    except Exception:
-        logger.exception("Exception occurred")
+    except Exception as e:
+        logger.exception(f"Exception occurred: {e}")
         return Response("Internal server error", status_code=500)
 
 
@@ -396,18 +396,15 @@ async def bot(request: Request, payload: dict = Body(...)):
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
-    # Increment total request counter
-
     try:
         response = await call_next(request)
         request_counter.add(1)
-        # If the response status code is 500, increment error counter
+        # Incremenet the error counter (this is just to prove that 500 requests are tracked sueccessfully)
         if response.status_code == 500:
             error_counter.add(1)
 
         return response
-    except Exception as e:
-        # Unhandled exception - treated as 500
+    except Exception:
         error_counter.add(1)
         return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
     
