@@ -26,6 +26,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from yaml.scanner import ScannerError
 
 from instrumentation.metrics import setup_metrics
+import time
 
 jira_text_renderer = JIRARenderer()
 
@@ -396,17 +397,41 @@ async def bot(request: Request, payload: dict = Body(...)):
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
+    start_time = time.time() 
+
     try:
         response = await call_next(request)
-        request_counter.add(1)
-        # Incremenet the error counter (this is just to prove that 500 requests are tracked sueccessfully)
-        if response.status_code == 500:
-            error_counter.add(1)
-
-        return response
     except Exception:
+        # Count errors
         error_counter.add(1)
+       
+        duration = time.time() - start_time
+        metrics_instruments["duration_histogram"].record(
+            duration,
+            {
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": "500"
+            }
+        )
         return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+
+    request_counter.add(1)
+
+    if response.status_code == 500:
+        error_counter.add(1)
+
+    duration = time.time() - start_time
+    metrics_instruments["duration_histogram"].record(
+        duration,
+        {
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": str(response.status_code)
+        }
+    )
+
+    return response
     
 @app.get("/test")
 async def test_endpoint():

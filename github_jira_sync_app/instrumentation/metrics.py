@@ -24,7 +24,13 @@ def setup_metrics(app: FastAPI, service_name="sync-bot"):
     test_counter = meter.create_counter(
         "syncbot_test_requests_total", description="Total number of visits to the test endpoint"
     )
-    # Mount the /metrics endpoint
+
+    request_duration_histogram = meter.create_histogram(
+    "syncbot_request_duration_seconds",
+    unit="s",
+    description="Histogram of request duration"
+)
+    
     metrics_app = make_asgi_app()
     app.mount("/metrics", metrics_app)
 
@@ -32,5 +38,6 @@ def setup_metrics(app: FastAPI, service_name="sync-bot"):
         "meter": meter,
         "request_counter": request_counter,
         "error_counter": error_counter,
-        "test_counter": test_counter
+        "test_counter": test_counter,
+        "duration_histogram": request_duration_histogram,
     }
