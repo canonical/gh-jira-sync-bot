@@ -5,6 +5,7 @@ from starlette.testclient import TestClient
 
 from github_jira_sync_app.instrumentation.metrics import setup_metrics
 
+
 def create_test_app():
     app = FastAPI()
 
@@ -21,6 +22,7 @@ def create_test_app():
         return Response(status_code=500)
 
     return app
+
 
 def get_metric_value(metric_text: str, metric_name: str) -> float:
     for family in text_string_to_metric_families(metric_text):
