@@ -10,23 +10,18 @@ from dotenv import load_dotenv
 from fastapi import Body
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
 from github import Github
 from github import GithubException
 from github import GithubIntegration
 from github.Issue import Issue
 from github.Repository import Repository
+from instrumentation.metrics import setup_metrics
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
-from starlette.requests import Request
-from starlette.responses import Response
-from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 from yaml.scanner import ScannerError
-
-from instrumentation.metrics import setup_metrics
-import time
 
 jira_text_renderer = JIRARenderer()
 
@@ -395,24 +390,20 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         return {"msg": msg}
 
-@app.middleware("http")
+
+"""@app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
-    start_time = time.time() 
+    start_time = time.time()
 
     try:
         response = await call_next(request)
     except Exception:
         # Count errors
         error_counter.add(1)
-       
+
         duration = time.time() - start_time
         metrics_instruments["duration_histogram"].record(
-            duration,
-            {
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": "500"
-            }
+            duration, {"method": request.method, "path": request.url.path, "status_code": "500"}
         )
         return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
@@ -427,18 +418,20 @@ async def metrics_middleware(request: Request, call_next):
         {
             "method": request.method,
             "path": request.url.path,
-            "status_code": str(response.status_code)
-        }
+            "status_code": str(response.status_code),
+        },
     )
 
-    return response
-    
+    return response"""
+
+
 @app.get("/test")
 async def test_endpoint():
     metrics_instruments["test_counter"].add(1)
-    #return {"msg": "Test endpoint hit!"}
+    # return {"msg": "Test endpoint hit!"}
     raise Exception("Simulated internal server error")
-        
+
+
 if __name__ == "__main__":
     import uvicorn
 
