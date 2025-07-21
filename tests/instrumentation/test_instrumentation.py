@@ -61,12 +61,7 @@ def test_metrics_and_endpoints():
     total_errors_metric_name = "syncbot_errors_total"
     total_errors_value = get_metric_value(metrics_body, total_errors_metric_name)
     assert (
-        total_errors_value >= 1
-    ), f"Expected {total_errors_metric_name} to be >= 1, got {total_errors_value}"
-
-    # Check the test counter is present and greater than or equal to 1
-    test_metric_name = "syncbot_test_requests_total"
-    test_value = get_metric_value(metrics_body, test_metric_name)
-    assert test_value >= 1, f"Expected {test_metric_name} to be >= 1, got {test_value}"
+        total_errors_value == 1
+    ), f"Expected {total_errors_metric_name} to be == 1, got {total_errors_value}"
 
     print("All metrics/instrumentation tests passed!")

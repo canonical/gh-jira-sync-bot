@@ -395,8 +395,6 @@ async def bot(request: Request, payload: dict = Body(...)):
 @app.get("/test")
 async def test_endpoint():
     metrics_instruments["test_counter"].add(1)
-
-    # return {"msg": "Test endpoint hit!"}
     raise Exception("Simulated internal server error")
 
 
