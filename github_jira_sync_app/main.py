@@ -391,6 +391,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         return {"msg": msg}
 
+
 if __name__ == "__main__":
     import uvicorn
 
