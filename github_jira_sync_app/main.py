@@ -391,13 +391,6 @@ async def bot(request: Request, payload: dict = Body(...)):
     else:
         return {"msg": msg}
 
-
-@app.get("/test")
-async def test_endpoint():
-    metrics_instruments["test_counter"].add(1)
-    raise Exception("Simulated internal server error")
-
-
 if __name__ == "__main__":
     import uvicorn
 
