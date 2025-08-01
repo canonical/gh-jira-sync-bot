@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from fastapi import Body
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
 from github import Github
 from github import GithubException
 from github import GithubIntegration
@@ -18,9 +20,9 @@ from github.Repository import Repository
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
-from starlette.requests import Request
-from starlette.responses import Response
 from yaml.scanner import ScannerError
+
+from .instrumentation.metrics import setup_metrics
 
 jira_text_renderer = JIRARenderer()
 
@@ -53,6 +55,9 @@ The internal ticket has been created: {jira_issue_link}.
 
 gh_synced_label_name = "synced-to-jira"
 
+with open(Path(__file__).parent / "settings.yaml") as file:
+    _file_settings = yaml.safe_load(file)
+
 
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
@@ -75,9 +80,6 @@ def define_logger():
 logger = define_logger()
 
 
-with open(Path(__file__).parent / "settings.yaml") as file:
-    _file_settings = yaml.safe_load(file)
-
 _env_settings = yaml.safe_load(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
 
 DEFAULT_SETTINGS = _env_settings or _file_settings
@@ -93,6 +95,8 @@ git_integration = GithubIntegration(
 
 
 app = FastAPI()
+
+metrics_instruments = setup_metrics(app)
 
 redis_host = os.getenv("REDIS_HOST", "")
 redis_port = os.getenv("REDIS_PORT", "")
