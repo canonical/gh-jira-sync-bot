@@ -1,5 +1,3 @@
-import logging
-import os
 import time
 
 from fastapi import FastAPI
@@ -11,27 +9,6 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.sdk.resources import Resource
 from prometheus_client import make_asgi_app
-
-
-def define_logger():
-    """Define logger to output to the file and to STDOUT."""
-    log = logging.getLogger("sync-bot-server")
-    log.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s (%(levelname)s) %(message)s", datefmt="%d.%m.%Y %H:%M:%S"
-    )
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-    log.addHandler(stream_handler)
-
-    log_file = os.environ.get("SYNC_BOT_LOGFILE", "sync_bot.log")
-    file_handler = logging.FileHandler(filename=log_file)
-    file_handler.setFormatter(formatter)
-    log.addHandler(file_handler)
-    return log
-
-
-logger = define_logger()
 
 
 def setup_metrics(app: FastAPI, service_name="sync-bot"):

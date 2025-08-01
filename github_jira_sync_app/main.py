@@ -17,8 +17,6 @@ from github import GithubException
 from github import GithubIntegration
 from github.Issue import Issue
 from github.Repository import Repository
-
-# from metrics import setup_metrics
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -57,6 +55,9 @@ The internal ticket has been created: {jira_issue_link}.
 
 gh_synced_label_name = "synced-to-jira"
 
+with open(Path(__file__).parent / "settings.yaml") as file:
+    _file_settings = yaml.safe_load(file)
+
 
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
@@ -78,9 +79,6 @@ def define_logger():
 
 logger = define_logger()
 
-
-with open(Path(__file__).parent / "settings.yaml") as file:
-    _file_settings = yaml.safe_load(file)
 
 _env_settings = yaml.safe_load(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
 
@@ -124,8 +122,8 @@ async def catch_exceptions_middleware(request, call_next):
     """
     try:
         return await call_next(request)
-    except Exception as e:
-        logger.exception(f"Exception occurred: {e}")
+    except Exception:
+        logger.exception("Exception occurred")
         return Response("Internal server error", status_code=500)
 
 
