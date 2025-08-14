@@ -29,8 +29,10 @@ jira_text_renderer = JIRARenderer()
 load_dotenv()
 
 jira_instance_url = os.getenv("JIRA_INSTANCE", "")
-jira_username = os.getenv("JIRA_USERNAME", "")
-jira_token = os.getenv("JIRA_TOKEN", "")
+jira_username = os.getenv("JIRA_USERNAME", "")  # Email Address
+jira_token = os.getenv("JIRA_TOKEN", "")  # PAT Token
+# Data Center has different Authorization Method
+jira_server_type = os.getenv("JIRA_TYPE", "cloud")  # cloud or datacenter
 
 assert jira_instance_url, "URL to your Jira instance must be provided via JIRA_INSTANCE env var"
 assert jira_username, "Jira username must be provided via JIRA_USERNAME env var"
@@ -79,7 +81,6 @@ def define_logger():
 
 logger = define_logger()
 
-
 _env_settings = yaml.safe_load(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
 
 DEFAULT_SETTINGS = _env_settings or _file_settings
@@ -92,7 +93,6 @@ git_integration = GithubIntegration(
     app_id,
     app_key,
 )
-
 
 app = FastAPI()
 
@@ -145,9 +145,9 @@ def truncate_description(s):
     """Jira has a limitation of 23000 characters for description. Truncate to avoid API error."""
     if len(s) > 28000:
         return (
-            s[:28000]
-            + "..."
-            + "\n Text exceeded Jira maximum length. Please see the original issue for details."
+                s[:28000]
+                + "..."
+                + "\n Text exceeded Jira maximum length. Please see the original issue for details."
         )
     return s
 
@@ -276,7 +276,10 @@ async def bot(request: Request, payload: dict = Body(...)):
             logger.warning(f"{repo_name}: {msg}")
             return {"msg": msg}
 
-    jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
+    if jira_server_type == "datacenter":
+        jira = JIRA(jira_instance_url, token_auth=jira_token)
+    else:
+        jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     jira_task_desc_match = f"This issue was created from GitHub Issue {gh_issue.html_url}"
     existing_issues = jira.search_issues(
         rf'project="{settings["jira_project_key"]}" AND '
