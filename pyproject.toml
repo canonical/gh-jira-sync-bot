@@ -17,7 +17,7 @@ dependencies = [
     "pygithub==2.5.0",
     "uvicorn[standard]==0.34.0",
     "load_dotenv==0.1.0",
-    "jira==3.8.0",
+    "jira==3.10.5",
     "mistletoe==1.0.1",
     "types-PyYAML",
     "opentelemetry-exporter-prometheus==0.55b1",
