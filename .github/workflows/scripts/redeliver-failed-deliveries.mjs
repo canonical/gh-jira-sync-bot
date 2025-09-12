@@ -51,11 +51,7 @@ async function checkAndRedeliverWebhooks() {
       console.log(`Attempting to redeliver delivery ID: ${deliveryId}`);
       await redeliverWebhook({deliveryId, app});
       console.log(`Redelivery request for ${deliveryId} sent. Waiting 1 second...`);
-      
-      // --- START OF ADDED CODE ---
-      // Pause execution for 1000 milliseconds (1 second) before the next iteration.
       await delay(1000);
-      // --- END OF ADDED CODE ---
     }
 
     // Log the number of redeliveries.
