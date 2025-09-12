@@ -1,12 +1,14 @@
 // https://docs.github.com/en/webhooks/using-webhooks/automatically-redelivering-failed-deliveries-for-a-github-app-webhook
 import { App } from "octokit";
 
-//
+// Helper function to create a delay. It returns a Promise that resolves after `ms` milliseconds.
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 async function checkAndRedeliverWebhooks() {
   // Get the values of environment variables that were set by the GitHub Actions workflow.
   const APP_ID = process.env.APP_ID;
   const PRIVATE_KEY = process.env.PRIVATE_KEY;
-  
+
   // Create an instance of the octokit `App` using the app ID and private key values that were set in the GitHub Actions workflow.
   //
   // This will be used to make API requests to the webhook-related endpoints.
@@ -46,7 +48,14 @@ async function checkAndRedeliverWebhooks() {
 
     // Redeliver any failed deliveries.
     for (const deliveryId of failedDeliveryIDs) {
+      console.log(`Attempting to redeliver delivery ID: ${deliveryId}`);
       await redeliverWebhook({deliveryId, app});
+      console.log(`Redelivery request for ${deliveryId} sent. Waiting 1 second...`);
+      
+      // --- START OF ADDED CODE ---
+      // Pause execution for 1000 milliseconds (1 second) before the next iteration.
+      await delay(1000);
+      // --- END OF ADDED CODE ---
     }
 
     // Log the number of redeliveries.
@@ -123,4 +132,3 @@ async function redeliverWebhook({deliveryId, app}) {
 (async () => {
   await checkAndRedeliverWebhooks();
 })();
-
