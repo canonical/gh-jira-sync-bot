@@ -9,3 +9,6 @@ settings:
   jira_project_key:
   label_mapping:
   status_mapping:
+  # map usernames from github to jira
+  user_mapping:
+    # githubUser: jiraUserName
