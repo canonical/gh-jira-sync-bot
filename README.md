@@ -57,6 +57,10 @@ settings:
   # If label on the issue is not in specified list, this issue will be created as a Bug
   label_mapping:
     enhancement: Story
+
+  # (Optional) User mapping between Github and Jira (case Sensitive)
+  user_mapping:
+    <GithubUser>: <JiraUsername> 
 ```
 
 
