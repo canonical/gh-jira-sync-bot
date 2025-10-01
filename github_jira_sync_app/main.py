@@ -196,7 +196,7 @@ async def bot(request: Request, payload: dict = Body(...)):
             }
     else:
         # validate issue webhooks
-        if payload["action"] not in ["opened", "edited", "closed", "reopened", "labeled"]:
+        if payload["action"] not in ["opened", "edited", "closed", "reopened", "labeled", "assigned", "unassigned"]:
             return {"msg": f"Action was triggered by Issue {payload['action']}. Ignoring."}
 
         if payload["action"] == "opened":
@@ -216,6 +216,8 @@ async def bot(request: Request, payload: dict = Body(...)):
                         " Purposefully ignored as caused by this bot."
                     )
                 }
+        if payload["action"] == "assigned" or payload["action"] == "unassigned":
+            gh_issue_assignees = payload["action"]["assignees"]
 
     owner = payload["repository"]["owner"]["login"]
     repo_name = payload["repository"]["name"]
@@ -371,6 +373,17 @@ async def bot(request: Request, payload: dict = Body(...)):
 
             jira_issue.update(fields=issue_dict)
             return {"msg": "Updated existing Jira Issue"}
+        elif payload["action"] == "assigned" or payload["action"] == "unassigned":
+            # since jira can only assign an issue to 1 user,
+            # we assume that the latest user assigned to this issue is the current assignee in jira
+            current_assignee = None
+            for assignee in reversed(gh_issue_assignees):
+                if assignee["login"] in settings["user_mapping"]:
+                    current_assignee = settings["user_mapping"][assignee["login"]]
+                    break
+
+            jira.assign_issue(jira_issue, current_assignee)
+            return {"msg": f"Issue assignee Updated to jira User of {current_assignee}"}
 
     if settings["sync_comments"] and payload["action"] == "created" and "comment" in payload.keys():
         # new comment was added to the issue
