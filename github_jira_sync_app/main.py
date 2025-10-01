@@ -88,6 +88,15 @@ app_id = os.getenv("APP_ID", "")
 app_key = os.getenv("PRIVATE_KEY", "")
 app_key = app_key.replace("\\n", "\n")  # since docker env variables do not support multiline
 
+# fallback trying to read Private Key from a file
+if app_key == "":
+    app_key_path = os.getenv("PRIVATE_KEY_PATH", "./private_key.pem")  # default path to repo root directory
+    if Path(app_key_path).exists():
+        with open(app_key_path, "r", encoding="utf-8") as f:
+            app_key = f.read()
+
+assert app_key, "Private Key Required"
+
 git_integration = GithubIntegration(
     app_id,
     app_key,
