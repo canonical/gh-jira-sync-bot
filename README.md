@@ -17,7 +17,12 @@ settings:
   # Dictionary mapping GitHub issue status to Jira issue status
   status_mapping:
     opened: Untriaged
-    closed: done 
+    closed: done
+    # (Optional) Use different status for GitHub issues closed as not planned (instead of closed as
+    # completed)
+    # https://github.blog/changelog/2022-03-10-the-new-github-issues-march-10th-update/#%F0%9F%95%B5%F0%9F%8F%BD%E2%99%80%EF%B8%8F-issue-closed-reasons
+    # If not specified, `closed` status will be used.
+    not_planned: rejected
     
   # (Optional) Jira project components that should be attached to the created issue
   # Component names are case-sensitive
@@ -33,6 +38,11 @@ settings:
       
   # (Optional) (Default: false) Add a new comment in GitHub with a link to Jira created issue
   add_gh_comment: false
+
+  # (Optional) (Default: false) Add a 'synced-to-jira' label to newly created issues once a
+  # corresponding ticket is successfully created in Jira.
+  # This label serves as confirmation that the issue sync process was completed successfully.
+  add_gh_synced_label: false
   
   # (Optional) (Default: true) Synchronize issue description from GitHub to Jira
   sync_description: true
@@ -73,8 +83,21 @@ The following environment variables are required:
 `APP_ID` - GitHub App ID  
 `PRIVATE_KEY` - GitHub App private key  
 `WEBHOOK_SECRET` - GitHub App webhook secret  
-`GITHUB_CLIENT_ID` - GitHub OAuth App client ID  
-`GITHUB_CLIENT_SECRET` - GitHub OAuth App client secret  
 `JIRA_INSTANCE` - Jira instance URL  
 `JIRA_USERNAME` - Jira username  
 `JIRA_TOKEN` - Jira API token  
+
+## GitHub App installation
+This app is meant to be installed as a GitHub application.  
+
+1. [Register a new GitHub app](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app).  
+2. Make sure to:  
+   - Generate a private key for the app.  
+   - Set up a webhook secret.  
+   - Add these repository permissions:  
+     - Issues: read and write  
+     - Metadata: read-only  
+     - Single file: read-only (Path: `.github/.jira_sync_config.yaml`)  
+   - Subscribe to these events:  
+     - Issues  
+     - Issue comments  
