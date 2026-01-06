@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from github import Github
 from github import GithubException
 from github import GithubIntegration
+from github.Issue import Issue
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -139,6 +140,29 @@ def verify_signature(payload_body, secret_token, signature_header):
         raise HTTPException(status_code=403, detail="Request signatures didn't match!")
 
 
+def _generate_summary(settings: dict, issue:Issue):
+    """Allow customizing the JIRA issue's summary field.
+
+    Examples:
+        - "[{issue.repository.name}] {issue.title}" will result in "[repo-name] Issue title"
+        - "GitHub Issue: {issue.title}" will result in "GitHub Issue: Issue title"
+        - "{issue.assignee.email}: {issue.title}" will result in "foo@bar.com: Issue title"
+
+    If the summary field is not specified or invalid, fall back to using the raw GitHub issue title.
+    """
+    summary_str = settings.get("summary", "")
+    if isinstance(summary_str, str) and summary_str:
+        try:
+            # we treat the input 'summary' as a format string and
+            # attempt to substitute any values we can access from the issue.
+            return settings["summary"].format(issue=issue)
+        except Exception:
+            msg = ".github/.jira_sync_config.yaml has invalid summary field. Check syntax."
+            logger.error(msg)
+
+    return issue.title
+
+
 @app.post("/")
 async def bot(request: Request, payload: dict = Body(...)):
     body_ = await request.body()
@@ -235,29 +259,10 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     issue_dict: dict[str, Any] = {
         "project": {"key": settings["jira_project_key"]},
-        "summary": issue.title,
+        "summary": _generate_summary(settings, issue),
         "description": issue_description,
         "issuetype": {"name": issue_type},
     }
-
-    # Allow customization of JIRA issue's summary field
-    # By using this configuration field, use can format the summary with the values
-    # from the GH issue variable
-    #
-    # Examples of usage:
-    # - to use fixed title "github issue": "github issue"
-    # - to use GH issue title: "{issue.title}"
-    # - to add prefix "GitHub" : "GitHub {issue.title}"
-    # - to add user in the title: "[{issue.user.login}] {issue.title}"
-    summary_str = settings.get("summary", "")
-    if isinstance(summary_str, str) and summary_str:
-        try:
-            summary_str = settings["summary"].format(issue=issue)
-            issue_dict["summary"] = summary_str
-        except Exception:
-            msg = ".github/.jira_sync_config.yaml has invalid summary field. Check syntax."
-            logger.error(msg)
-            return {"msg": msg}
 
     if settings["epic_key"]:
         issue_dict["parent"] = {"key": settings["epic_key"]}
