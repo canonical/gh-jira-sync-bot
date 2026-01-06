@@ -17,7 +17,6 @@ from github import GithubException
 from github import GithubIntegration
 from github.Issue import Issue
 from github.Repository import Repository
-from github.Issue import Issue
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
@@ -173,7 +172,7 @@ def verify_signature(payload_body, secret_token, signature_header):
         raise HTTPException(status_code=403, detail="Request signatures didn't match!")
 
 
-def _generate_summary(settings: dict, issue:Issue):
+def _generate_summary(settings: dict, issue: Issue):
     """Allow customizing the JIRA issue's summary field.
 
     Examples:
