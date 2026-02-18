@@ -1,0 +1,8 @@
+responses:
+  - response:
+      auto_calculate_content_length: false
+      body: '{"expand":"names,schema","startAt":0,"maxResults":50,"total":1,"issues":[{"expand":"operations,versionedRepresentations,editmeta,changelog,renderedFields","id":"10002","self":"https://my-jira.atlassian.net/rest/api/2/issue/10002","key":"MTC-314","fields":{"summary":"new test","description":"This issue was created from GitHub Issue https://github.com/beliaev-maksim/test-ci/issues/30","issuetype":{"name":"Bug"},"project":{"id":"10000","key":"WD","name":"Web & Design"},"parent":{"id":"10001","key":"WD-31040","self":"https://my-jira.atlassian.net/rest/api/2/issue/10001","fields":{"summary":"Parent Epic"}},"status":{"name":"To Do","id":"10011"},"customfield_10020":null}}]}'
+      content_type: text/plain
+      method: GET
+      status: 200
+      url: https://my-jira.atlassian.net/rest/api/2/search/jql?jql=project%3D%22WD%22+AND+description+~%22%5C%22This+issue+was+created+from+GitHub+Issue+https%3A%2F%2Fgithub.com%2Fbeliaev-maksim%2Ftest-ci%2Fissues%2F30%5C%22%22&fields=%2Aall&maxResults=50

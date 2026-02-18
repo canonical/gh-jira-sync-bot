@@ -1,0 +1,22 @@
+responses:
+  - response:
+      auto_calculate_content_length: false
+      body: '{"id":"10002","self":"https://my-jira.atlassian.net/rest/api/2/issue/10002","key":"MTC-314","fields":{"summary":"new test","description":"Test issue","project":{"key":"WD"}}}'
+      content_type: text/plain
+      method: GET
+      status: 200
+      url: https://my-jira.atlassian.net/rest/api/2/issue/MTC-314
+  - response:
+      auto_calculate_content_length: false
+      body: '{"id":"10002","self":"https://my-jira.atlassian.net/rest/api/2/issue/10002","key":"MTC-314","fields":{"summary":"new test","description":"Test issue","project":{"key":"WD"}}}'
+      content_type: text/plain
+      method: GET
+      status: 200
+      url: https://my-jira.atlassian.net/rest/api/2/issue/10002
+  - response:
+      auto_calculate_content_length: false
+      body: ""
+      content_type: text/plain
+      method: PUT
+      status: 204
+      url: https://my-jira.atlassian.net/rest/api/2/issue/10002

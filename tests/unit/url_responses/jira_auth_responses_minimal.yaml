@@ -1,0 +1,17 @@
+# Minimal Jira auth responses for pulse tests
+# Only includes serverInfo and field, no components mock (not needed when components: null)
+responses:
+  - response:
+      auto_calculate_content_length: false
+      body: '{"baseUrl":"https://my-jira.atlassian.net","version":"1001.0.0-SNAPSHOT","versionNumbers":[1001,0,0],"deploymentType":"Cloud","buildNumber":100229,"buildDate":"2023-07-04T14:01:07.000+0100","serverTime":"2023-07-05T12:56:24.472+0100","scmInfo":"634ba050f968f89f209dd80db6760d2dfbef51e5","serverTitle":"Jira","defaultLocale":{"locale":"en_US"}}'
+      content_type: text/plain
+      method: GET
+      status: 200
+      url: https://my-jira.atlassian.net/rest/api/2/serverInfo
+  - response:
+      auto_calculate_content_length: false
+      body: "[{}]"
+      content_type: text/plain; charset=utf-8
+      method: GET
+      status: 200
+      url: https://my-jira.atlassian.net/rest/api/2/field

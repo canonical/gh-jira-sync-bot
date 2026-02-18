@@ -23,6 +23,7 @@ from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
 from yaml.scanner import ScannerError
 
 from .instrumentation.metrics import setup_metrics
+from .pulse_utils import process_pulse_assignment
 
 jira_text_renderer = JIRARenderer()
 
@@ -193,6 +194,36 @@ def _generate_summary(settings: dict, issue: Issue):
             logger.error(msg)
 
     return issue.title
+
+
+def _handle_pulse_assignment(jira: JIRA, jira_issue, gh_issue_payload: dict, settings: dict):
+    """Handle pulse assignment for a closed issue.
+
+    Args:
+        jira: Authenticated Jira client
+        jira_issue: Jira issue object
+        gh_issue_payload: GitHub issue payload from webhook
+        settings: Configuration settings
+
+    Returns:
+        Optional[str]: Success message if pulse was assigned, None otherwise
+    """
+    pulse_config = settings.get("pulse_assignment", {})
+    if not pulse_config.get("enabled", False):
+        return None
+
+    # Get the closed_at timestamp from the GitHub issue
+    closed_at = gh_issue_payload.get("closed_at")
+    if not closed_at:
+        logger.warning("GitHub issue has no closed_at timestamp, cannot assign pulse")
+        return None
+
+    # Extract just the date part (YYYY-MM-DD) from the ISO 8601 timestamp
+    closed_date = closed_at.split("T")[0]
+
+    return process_pulse_assignment(
+        jira, jira_issue, closed_date, pulse_config, settings["jira_project_key"]
+    )
 
 
 @app.post("/")
@@ -380,10 +411,18 @@ async def bot(request: Request, payload: dict = Body(...)):
         if payload["action"] == "closed":
             if payload["issue"]["state_reason"] == "not_planned":
                 jira.transition_issue(jira_issue, not_planned_status)
-                return {"msg": "Closed existing Jira Issue as not planned"}
+                pulse_msg = _handle_pulse_assignment(jira, jira_issue, payload["issue"], settings)
+                msg = "Closed existing Jira Issue as not planned"
+                if pulse_msg:
+                    msg += f". {pulse_msg}"
+                return {"msg": msg}
             else:
                 jira.transition_issue(jira_issue, closed_status)
-                return {"msg": "Closed existing Jira Issue"}
+                pulse_msg = _handle_pulse_assignment(jira, jira_issue, payload["issue"], settings)
+                msg = "Closed existing Jira Issue"
+                if pulse_msg:
+                    msg += f". {pulse_msg}"
+                return {"msg": msg}
         elif payload["action"] == "reopened":
             jira.transition_issue(jira_issue, opened_status)
             return {"msg": "Reopened existing Jira Issue"}

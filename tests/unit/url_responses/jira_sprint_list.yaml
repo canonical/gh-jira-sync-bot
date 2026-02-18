@@ -1,0 +1,8 @@
+responses:
+  - response:
+      auto_calculate_content_length: false
+      body: '{"values":[{"id":123,"name":"Pulse 2026#01 - Web & Design","state":"active","startDate":"2026-01-01T00:00:00.000Z"},{"id":124,"name":"Pulse 2026#02 - Web & Design","state":"closed","startDate":"2026-01-15T00:00:00.000Z"},{"id":125,"name":"Pulse 2026#03 - Web & Design","state":"active","startDate":"2026-01-29T00:00:00.000Z"}],"isLast":true}'
+      content_type: text/plain
+      method: GET
+      status: 200
+      url: https://my-jira.atlassian.net/rest/api/2/agile/1.0/board/932/sprint?startAt=0&maxResults=50

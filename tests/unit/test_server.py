@@ -278,3 +278,68 @@ def test_issue_created_and_synced_label(signature_mock):
             "Purposefully ignored as caused by this bot."
         )
     }
+
+
+@responses.activate(assert_all_requests_are_fired=True)
+def test_issue_closed_with_pulse_assignment(signature_mock):
+    """Test pulse assignment when an issue is closed.
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo (with pulse_assignment enabled)
+        4. Authenticate in Jira
+        5. Find existing Jira issue via JQL
+        6. Transition issue to closed
+        7. Calculate pulse based on closed_at date (Feb 11, 2026 -> Pulse 2026#03)
+        8. Query Jira for sprint list
+        9. Update issue with sprint field
+    """
+    responses._add_from_file(
+        UNITTESTS_DIR / "url_responses" / "jira_jql_existing_issues_for_pulse.yaml"
+    )
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_pulse.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses_minimal.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_transition_issue.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_sprint_list.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_update_sprint.yaml")
+
+    response = client.post(
+        "/",
+        json=_get_json("issue_closed_with_pulse.json"),
+    )
+
+    assert response.status_code == 200
+    assert "Closed existing Jira Issue" in response.json()["msg"]
+    assert "Pulse 2026#03" in response.json()["msg"]
+
+
+@responses.activate(assert_all_requests_are_fired=False)
+def test_issue_closed_pulse_assignment_disabled(signature_mock):
+    """Test that pulse assignment is skipped when disabled.
+
+    Tests the following scenario:
+        1. Authenticate in GitHub
+        2. Get issue from GitHub
+        3. Get content of .jira_sync_config.yaml from GitHub repo (without pulse_assignment)
+        4. Authenticate in Jira
+        5. Find existing Jira issue via JQL
+        6. Transition issue to closed
+        7. No pulse assignment (feature disabled)
+    """
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_jql_existing_issues.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_auth.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "github_settings_with_labels.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_auth_responses.yaml")
+    responses._add_from_file(UNITTESTS_DIR / "url_responses" / "jira_transition_issue.yaml")
+
+    response = client.post(
+        "/",
+        json=_get_json("issue_closed_with_pulse.json"),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Closed existing Jira Issue"}
+    # Should not contain pulse information
+    assert "Pulse" not in response.json()["msg"]

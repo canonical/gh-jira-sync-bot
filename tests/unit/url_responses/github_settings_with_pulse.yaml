@@ -1,0 +1,8 @@
+responses:
+  - response:
+      auto_calculate_content_length: false
+      body: '{"name":".jira_sync_config.yaml","path":".github/.jira_sync_config.yaml","sha":"68e8f1b3f89d4f9e7ea08a41c75c2ce07061e04e","size":267,"url":"https://api.github.com/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml?ref=main","html_url":"https://github.com/beliaev-maksim/test-ci/blob/main/.github/.jira_sync_config.yaml","git_url":"https://api.github.com/repos/beliaev-maksim/test-ci/git/blobs/68e8f1b3f89d4f9e7ea08a41c75c2ce07061e04e","download_url":"https://raw.githubusercontent.com/beliaev-maksim/test-ci/main/.github/.jira_sync_config.yaml","type":"file","content":"c2V0dGluZ3M6CiAgbGFiZWxzOgogICAgLSBidWcKICBqaXJhX3Byb2plY3Rfa2V5OiBXRAogIHN0YXR1c19tYXBwaW5nOgogICAgb3BlbmVkOiAiVG8gRG8iCiAgICBjbG9zZWQ6ICJEb25lIgogICAgbm90X3BsYW5uZWQ6ICJEb25lIgogIHB1bHNlX2Fzc2lnbm1lbnQ6CiAgICBlbmFibGVkOiB0cnVlCiAgICBwcm9qZWN0X2tleTogIldEIgogICAgYm9hcmRfaWQ6IDkzMgogICAgc3ByaW50X2ZpZWxkX2lkOiAiY3VzdG9tZmllbGRfMTAwMjAiCiAgICBzcHJpbnRfbmFtZV9wYXR0ZXJuOiAiUHVsc2Uge3llYXJ9I3tudW1iZXJ9IC0gV2ViICYgRGVzaWduIgo=","encoding":"base64"}'
+      content_type: text/plain
+      method: GET
+      status: 200
+      url: https://api.github.com:443/repos/beliaev-maksim/test-ci/contents/.github/.jira_sync_config.yaml

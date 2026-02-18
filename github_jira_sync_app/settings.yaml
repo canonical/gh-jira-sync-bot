@@ -10,3 +10,9 @@ settings:
   label_mapping:
   status_mapping:
   summary:
+  pulse_assignment:
+    enabled: false
+    project_key:
+    board_id:
+    sprint_field_id: "customfield_10020"
+    sprint_name_pattern: "Pulse {year}#{number} - Web & Design"
