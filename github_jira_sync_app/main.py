@@ -58,6 +58,8 @@ gh_synced_label_name = "synced-to-jira"
 with open(Path(__file__).parent / "settings.yaml") as file:
     _file_settings = yaml.safe_load(file)
 
+allowed_gh_actions = ["opened", "edited", "closed", "reopened", "labeled", "unlabeled"]
+
 
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
@@ -219,8 +221,13 @@ async def bot(request: Request, payload: dict = Body(...)):
             }
     else:
         # validate issue webhooks
-        if payload["action"] not in ["opened", "edited", "closed", "reopened", "labeled"]:
-            return {"msg": f"Action was triggered by Issue {payload['action']}. Ignoring."}
+        if payload["action"] not in allowed_gh_actions:
+            return {
+                "msg": (
+                    f"Action was triggered by Issue {payload['action']} "
+                    f"which is not one of {allowed_gh_actions}. Ignoring."
+                )
+            }
 
         if payload["action"] == "opened":
             if payload["issue"].get("labels", []):
@@ -283,8 +290,13 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     labels = settings["labels"] or []
     allowed_labels = [str(label).lower() for label in labels]
-    payload_labels = [label.name.lower() for label in gh_issue.labels]
-    if allowed_labels and not any(label in allowed_labels for label in payload_labels):
+    payload_labels = {label.name.lower() for label in gh_issue.labels}
+    update_jira_labels = settings["sync_labels"] and payload["action"] in ["unlabeled", "labeled"]
+    if (
+        not update_jira_labels
+        and allowed_labels
+        and not any(label in allowed_labels for label in payload_labels)
+    ):
         msg = "Issue is not labeled with the specified label"
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
@@ -352,6 +364,14 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     msg = ""
     if not existing_issues:
+        if update_jira_labels and not payload_labels.intersection(set(allowed_labels)):
+            return {
+                "msg": (
+                    "Issue in Jira doesn't exist and GitHub labels not found in allowed_labels. "
+                    "Ignoring."
+                )
+            }
+
         if payload["action"] == "closed":
             return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
 
@@ -387,6 +407,20 @@ async def bot(request: Request, payload: dict = Body(...)):
         elif payload["action"] == "reopened":
             jira.transition_issue(jira_issue, opened_status)
             return {"msg": "Reopened existing Jira Issue"}
+        elif update_jira_labels:
+            jira_labels = {label.lower() for label in jira_issue.fields.labels}
+            if jira_labels.symmetric_difference(payload_labels):
+                jira_issue.update(fields={"labels": list(payload_labels)})
+                b_jira_labels = ", ".join(list(jira_labels)) or "None"
+                a_jira_labels = ", ".join(list(payload_labels)) or "None"
+                return {
+                    "msg": (
+                        f"Updated existing Jira Issue labels ({b_jira_labels} -> "
+                        f"{a_jira_labels})"
+                    )
+                }
+
+            return {"msg": "No change to Jira Issue labels required"}
         elif payload["action"] == "edited":
             if settings["components"]:
                 # need to append components to the existing list

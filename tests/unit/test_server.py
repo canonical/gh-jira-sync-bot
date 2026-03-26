@@ -429,6 +429,56 @@ class TestSyncedLabelFlow:
         assert response.status_code == 200
         assert "Purposefully ignored" in response.json()["msg"]
 
+    def test_sync_unlabelled_for_existing_issue(self, signature_mock, mock_github, mock_jira):
+        """Test syncing removed labels for existing issue."""
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(sync_labels=True, labels=["bug"])
+        mock_github.set_config(settings)
+        # "enhancement" is NOT in allowed labels ["bug"]
+        mock_github.issue.labels = []
+        mock_jira.set_existing_issues()
+        mock_jira.existing_issue.fields.labels = ["foo"]
+        response = client.post("/", json=_get_json("issue_unlabeled.json"))
+        assert response.status_code == 200
+        assert "Updated existing Jira Issue labels (foo -> None)" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_sync_labels_for_existing_issue(self, signature_mock, mock_github, mock_jira):
+        """Test syncing labels for existing issue."""
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(sync_labels=True, labels=["bug"])
+        mock_github.set_config(settings)
+        # "enhancement" is NOT in allowed labels ["bug"]
+        mock_github.issue.labels = [_make_label("enhancement")]
+        mock_jira.set_existing_issues()
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert "Updated existing Jira Issue labels (None -> enhancement)" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_sync_labels_not_creates_issue_for_non_allowed_labels(
+        self, signature_mock, mock_github, mock_jira
+    ):
+        """Ensure sync_labels=True does not bypass allowed-labels gate and create a Jira issue
+        even when the issue only carries a label not in the allowed list.
+        """
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(sync_labels=True, labels=["bug"])
+        mock_github.set_config(settings)
+        # "enhancement" is NOT in allowed labels ["bug"]
+        mock_github.issue.labels = [_make_label("enhancement")]
+        # no existing Jira issue (default mock)
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert (
+            "Issue in Jira doesn't exist and GitHub labels not found in allowed_labels. Ignoring."
+            in response.json()["msg"]
+        )
+        mock_jira.client.create_issue.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # Redis deduplication
