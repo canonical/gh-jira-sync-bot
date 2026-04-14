@@ -1,7 +1,8 @@
 import json
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
@@ -120,37 +121,45 @@ class TestConfigValidation:
         assert "invalid" in response.json()["msg"].lower()
 
     def test_missing_jira_project_key(self, signature_mock, mock_github):
-        mock_github.set_config({"settings": {
-            "jira_project_key": None,
-            "status_mapping": {"opened": "To Do", "closed": "Done"},
-            "labels": None,
-            "components": None,
-            "sync_description": True,
-            "sync_comments": True,
-            "add_gh_comment": False,
-            "add_gh_synced_label": False,
-            "epic_key": None,
-            "label_mapping": None,
-            "summary": None,
-        }})
+        mock_github.set_config(
+            {
+                "settings": {
+                    "jira_project_key": None,
+                    "status_mapping": {"opened": "To Do", "closed": "Done"},
+                    "labels": None,
+                    "components": None,
+                    "sync_description": True,
+                    "sync_comments": True,
+                    "add_gh_comment": False,
+                    "add_gh_synced_label": False,
+                    "epic_key": None,
+                    "label_mapping": None,
+                    "summary": None,
+                }
+            }
+        )
         response = client.post("/", json=_get_json("issue_labeled_correct.json"))
         assert response.status_code == 200
         assert "Jira project key" in response.json()["msg"]
 
     def test_missing_status_mapping(self, signature_mock, mock_github):
-        mock_github.set_config({"settings": {
-            "jira_project_key": "TEST",
-            "status_mapping": None,
-            "labels": None,
-            "components": None,
-            "sync_description": True,
-            "sync_comments": True,
-            "add_gh_comment": False,
-            "add_gh_synced_label": False,
-            "epic_key": None,
-            "label_mapping": None,
-            "summary": None,
-        }})
+        mock_github.set_config(
+            {
+                "settings": {
+                    "jira_project_key": "TEST",
+                    "status_mapping": None,
+                    "labels": None,
+                    "components": None,
+                    "sync_description": True,
+                    "sync_comments": True,
+                    "add_gh_comment": False,
+                    "add_gh_synced_label": False,
+                    "epic_key": None,
+                    "label_mapping": None,
+                    "summary": None,
+                }
+            }
+        )
         response = client.post("/", json=_get_json("issue_labeled_correct.json"))
         assert response.status_code == 200
         assert "Status mapping" in response.json()["msg"]
@@ -177,6 +186,7 @@ class TestCreateNewJiraIssue:
     def test_create_from_opened_without_label_config(self, signature_mock, mock_github, mock_jira):
         """When no labels are required, opened issue (without labels) should sync."""
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(labels=None)
         mock_github.set_config(settings)
         mock_github.issue.labels = []
@@ -186,6 +196,7 @@ class TestCreateNewJiraIssue:
 
     def test_create_with_epic_key(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(epic_key="EPIC-1")
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -197,6 +208,7 @@ class TestCreateNewJiraIssue:
 
     def test_create_with_components(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(components=["Frontend", "Backend"])
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -212,6 +224,7 @@ class TestCreateNewJiraIssue:
 
     def test_create_with_label_mapping(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(label_mapping={"bug": "Defect", "feature": "Story"})
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -223,6 +236,7 @@ class TestCreateNewJiraIssue:
 
     def test_create_with_custom_summary(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(summary="[{issue.repository.name}] {issue.title}")
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -232,6 +246,7 @@ class TestCreateNewJiraIssue:
 
     def test_create_with_synced_label(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(add_gh_synced_label=True)
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -241,6 +256,7 @@ class TestCreateNewJiraIssue:
 
     def test_create_with_gh_comment(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(add_gh_comment=True)
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -268,9 +284,7 @@ class TestExistingJiraIssue:
         response = client.post("/", json=_get_json("issue_closed_as_completed.json"))
         assert response.status_code == 200
         assert response.json() == {"msg": "Closed existing Jira Issue"}
-        mock_jira.client.transition_issue.assert_called_once_with(
-            mock_jira.existing_issue, "Done"
-        )
+        mock_jira.client.transition_issue.assert_called_once_with(mock_jira.existing_issue, "Done")
 
     def test_close_as_not_planned(self, signature_mock, mock_github, mock_jira):
         mock_github.issue.labels = [_make_label("bug")]
@@ -288,9 +302,7 @@ class TestExistingJiraIssue:
         response = client.post("/", json=_get_json("issue_reopened.json"))
         assert response.status_code == 200
         assert response.json() == {"msg": "Reopened existing Jira Issue"}
-        mock_jira.client.transition_issue.assert_called_once_with(
-            mock_jira.existing_issue, "To Do"
-        )
+        mock_jira.client.transition_issue.assert_called_once_with(mock_jira.existing_issue, "To Do")
 
     def test_edit_existing_issue(self, signature_mock, mock_github, mock_jira):
         mock_github.issue.labels = [_make_label("bug")]
@@ -302,6 +314,7 @@ class TestExistingJiraIssue:
 
     def test_edit_existing_issue_appends_components(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(components=["Frontend"])
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -330,6 +343,7 @@ class TestExistingJiraIssue:
     def test_labeled_existing_no_action(self, signature_mock, mock_github, mock_jira):
         """Labeled with existing Jira issue, no comment → No action performed."""
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(sync_comments=False)
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -351,7 +365,9 @@ class TestCommentSync:
         assert response.json() == {"msg": "New comment from GitHub was added to Jira"}
         mock_jira.client.add_comment.assert_called_once()
 
-    def test_comment_on_new_issue_creates_then_comments(self, signature_mock, mock_github, mock_jira):
+    def test_comment_on_new_issue_creates_then_comments(
+        self, signature_mock, mock_github, mock_jira
+    ):
         """Comment created on issue not yet in Jira → create issue + sync comment."""
         mock_github.issue.labels = [_make_label("bug")]
         # No existing issues (default)
@@ -364,6 +380,7 @@ class TestCommentSync:
 
     def test_comment_sync_disabled(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(sync_comments=False)
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -376,6 +393,7 @@ class TestCommentSync:
     def test_description_sync_disabled(self, signature_mock, mock_github, mock_jira):
         """When sync_description is False, issue body should not be in Jira description."""
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(sync_description=False)
         mock_github.set_config(settings)
         mock_github.issue.labels = [_make_label("bug")]
@@ -391,9 +409,12 @@ class TestCommentSync:
 # Synced label + subsequent webhook flow
 # ---------------------------------------------------------------------------
 class TestSyncedLabelFlow:
-    def test_issue_created_and_synced_label_webhook_ignored(self, signature_mock, mock_github, mock_jira):
+    def test_issue_created_and_synced_label_webhook_ignored(
+        self, signature_mock, mock_github, mock_jira
+    ):
         """Create issue with synced label → next webhook for that label is ignored."""
         from tests.unit.conftest import _default_settings
+
         settings = _default_settings(add_gh_synced_label=True, labels=None)
         mock_github.set_config(settings)
         mock_github.issue.labels = []

@@ -3,12 +3,10 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi import HTTPException
 
-from github_jira_sync_app.main import (
-    merge_dicts,
-    truncate_description,
-    _generate_summary,
-    verify_signature,
-)
+from github_jira_sync_app.main import _generate_summary
+from github_jira_sync_app.main import merge_dicts
+from github_jira_sync_app.main import truncate_description
+from github_jira_sync_app.main import verify_signature
 
 
 class TestMergeDicts:
@@ -108,6 +106,7 @@ class TestVerifySignature:
     def _compute_signature(self, payload: bytes, secret: str) -> str:
         import hashlib
         import hmac as _hmac
+
         hash_obj = _hmac.new(secret.encode("utf-8"), msg=payload, digestmod=hashlib.sha256)
         return "sha256=" + hash_obj.hexdigest()
 
