@@ -1,0 +1,56 @@
+{
+  "action": "reopened",
+  "issue": {
+    "url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30",
+    "repository_url": "https://api.github.com/repos/beliaev-maksim/test-ci",
+    "labels_url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30/labels{/name}",
+    "comments_url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30/comments",
+    "events_url": "https://api.github.com/repos/beliaev-maksim/test-ci/issues/30/events",
+    "html_url": "https://github.com/beliaev-maksim/test-ci/issues/30",
+    "id": 2466054162,
+    "node_id": "I_kwDOI7Rtfs6S_QAS",
+    "number": 30,
+    "title": "new test",
+    "user": {
+      "login": "beliaev-maksim",
+      "id": 51964909
+    },
+    "labels": [
+      {
+        "id": 5157325446,
+        "url": "https://api.github.com/repos/beliaev-maksim/test-ci/labels/bug",
+        "name": "bug",
+        "color": "d73a4a",
+        "default": true,
+        "description": "Something isn't working"
+      }
+    ],
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [],
+    "milestone": null,
+    "comments": 1,
+    "created_at": "2024-08-14T14:40:44Z",
+    "updated_at": "2024-08-14T14:41:30Z",
+    "closed_at": null,
+    "author_association": "OWNER",
+    "body": null,
+    "state_reason": "reopened"
+  },
+  "repository": {
+    "id": 599027070,
+    "node_id": "R_kgDOI7Rtfg",
+    "name": "test-ci",
+    "full_name": "beliaev-maksim/test-ci",
+    "private": false,
+    "owner": {
+      "login": "beliaev-maksim",
+      "id": 51964909
+    }
+  },
+  "sender": {
+    "login": "beliaev-maksim",
+    "id": 51964909
+  }
+}
