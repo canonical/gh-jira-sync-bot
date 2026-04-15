@@ -73,6 +73,10 @@ settings:
   # to add prefix "[GitHub]" : "[GitHub] {issue.title}"
   # to add user in the title (between square brackets): "[{issue.user.login}] {issue.title}"
   summary: "{issue.title}"
+
+  # (Optional) set to True if GitHub issue labels should be synced to Jira.
+  # Note, that will override all the labels in Jira.
+  sync_labels: false
 ```
 
 
