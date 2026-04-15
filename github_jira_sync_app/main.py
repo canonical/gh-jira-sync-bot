@@ -364,7 +364,11 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     msg = ""
     if not existing_issues:
-        if update_jira_labels and not payload_labels.intersection(set(allowed_labels)):
+        if (
+            update_jira_labels
+            and allowed_labels
+            and not payload_labels.intersection(set(allowed_labels))
+        ):
             return {
                 "msg": (
                     "Issue in Jira doesn't exist and GitHub labels not found in allowed_labels. "

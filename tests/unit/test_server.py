@@ -479,6 +479,37 @@ class TestSyncedLabelFlow:
         )
         mock_jira.client.create_issue.assert_not_called()
 
+    def test_sync_labels_with_no_allowed_labels_creates_issue(
+        self, signature_mock, mock_github, mock_jira
+    ):
+        """sync_labels=True with labels=None should still create a Jira issue on a label
+        event when no allowed-labels filtering is configured.
+        """
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(sync_labels=True, labels=None)
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("enhancement")]
+        # no existing Jira issue (default mock)
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert "Issue was created in Jira" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_called_once()
+
+    def test_sync_labels_no_change_required(self, signature_mock, mock_github, mock_jira):
+        """When Jira and GitHub labels are already identical, no update should happen."""
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(sync_labels=True, labels=["bug"])
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        mock_jira.set_existing_issues()
+        mock_jira.existing_issue.fields.labels = ["bug"]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert response.json() == {"msg": "No change to Jira Issue labels required"}
+        mock_jira.existing_issue.update.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # Redis deduplication
