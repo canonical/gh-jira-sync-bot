@@ -2,7 +2,6 @@ import logging
 import time
 
 from fastapi import FastAPI
-from fastapi import Request
 from fastapi import Response
 from opentelemetry import metrics
 from opentelemetry.exporter.prometheus import PrometheusMetricReader

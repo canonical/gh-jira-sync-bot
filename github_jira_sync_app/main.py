@@ -13,7 +13,6 @@ from fastapi import Body
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Request
-from fastapi import Response
 from github import Github
 from github import GithubException
 from github import GithubIntegration
