@@ -291,7 +291,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     labels = settings["labels"] or []
     allowed_labels = [str(label).lower() for label in labels]
     payload_labels = {label.name.lower() for label in gh_issue.labels}
-    update_jira_labels = settings["sync_labels"] and payload["action"] in ["unlabeled", "labeled"]
+    update_jira_labels = settings.get("sync_labels", False) and payload["action"] in ["unlabeled", "labeled"]
     if (
         not update_jira_labels
         and allowed_labels
