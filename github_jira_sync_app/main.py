@@ -1,7 +1,9 @@
 import hashlib
 import hmac
+import json
 import logging
 import os
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -61,13 +63,26 @@ with open(Path(__file__).parent / "settings.yaml") as file:
 allowed_gh_actions = ["opened", "edited", "closed", "reopened", "labeled", "unlabeled"]
 
 
+class JSONFormatter(logging.Formatter):
+    """JSON log formatter for structured logging (Loki, Grafana, etc.)."""
+
+    def format(self, record):
+        log_entry = {
+            "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S.%fZ"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info and record.exc_info[0]:
+            log_entry["exception"] = "".join(traceback.format_exception(*record.exc_info))
+        return json.dumps(log_entry)
+
+
 def define_logger():
     """Define logger to output to the file and to STDOUT."""
     log = logging.getLogger("sync-bot-server")
     log.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s (%(levelname)s) %(message)s", datefmt="%d.%m.%Y %H:%M:%S"
-    )
+    formatter = JSONFormatter()
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
@@ -113,20 +128,6 @@ if redis_host:
     except redis.ConnectionError:
         logger.error("Redis connection error. Redis is not available.")
         redis_client = None
-
-
-@app.middleware("http")
-async def catch_exceptions_middleware(request, call_next):
-    """Middleware to catch all exceptions.
-
-    All exceptions that were raised during handling of the request will be caught
-    and logged with the traceback, then 500 response will be returned to the user.
-    """
-    try:
-        return await call_next(request)
-    except Exception:
-        logger.exception("Exception occurred")
-        return Response("Internal server error", status_code=500)
 
 
 def merge_dicts(d1, d2):

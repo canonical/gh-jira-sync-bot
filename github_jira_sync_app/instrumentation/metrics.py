@@ -1,14 +1,68 @@
+import logging
 import time
 
 from fastapi import FastAPI
 from fastapi import Request
-from fastapi.responses import JSONResponse
+from fastapi import Response
 from opentelemetry import metrics
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.sdk.resources import Resource
 from prometheus_client import make_asgi_app
+
+logger = logging.getLogger("sync-bot-server")
+
+
+class MetricsAndLoggingMiddleware:
+    """Raw ASGI middleware for metrics collection and exception logging.
+
+    Unlike BaseHTTPMiddleware, this actually catches exceptions that
+    Starlette's ServerErrorMiddleware would otherwise swallow silently.
+    """
+
+    def __init__(self, app, request_counter, error_counter, duration_histogram):
+        self.app = app
+        self.request_counter = request_counter
+        self.error_counter = error_counter
+        self.duration_histogram = duration_histogram
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        self.request_counter.add(1)
+        start_time = time.time()
+        status_code = 500
+        response_started = False
+
+        async def send_wrapper(message):
+            nonlocal status_code, response_started
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_wrapper)
+        except Exception:
+            logger.exception("Unhandled exception")
+            self.error_counter.add(1)
+            if not response_started:
+                response = Response("Internal server error", status_code=500)
+                await response(scope, receive, send)
+        else:
+            if status_code >= 500:
+                self.error_counter.add(1)
+        finally:
+            duration = time.time() - start_time
+            path = scope.get("path", "unknown")
+            method = scope.get("method", "unknown")
+            self.duration_histogram.record(
+                duration,
+                {"method": method, "path": path, "status_code": str(status_code)},
+            )
 
 
 def setup_metrics(app: FastAPI, service_name="sync-bot"):
@@ -38,8 +92,11 @@ def setup_metrics(app: FastAPI, service_name="sync-bot"):
     metrics_app = make_asgi_app()
     app.mount("/metrics", metrics_app)
 
-    app.middleware("http")(
-        create_metrics_middleware(request_counter, error_counter, request_duration_histogram)
+    app.add_middleware(
+        MetricsAndLoggingMiddleware,
+        request_counter=request_counter,
+        error_counter=error_counter,
+        duration_histogram=request_duration_histogram,
     )
 
     return {
@@ -49,42 +106,3 @@ def setup_metrics(app: FastAPI, service_name="sync-bot"):
         "test_counter": test_counter,
         "duration_histogram": request_duration_histogram,
     }
-
-
-def create_metrics_middleware(request_counter, error_counter, duration_histogram):
-    async def metrics_middleware(request: Request, call_next):
-        request_counter.add(1)
-        start_time = time.time()
-
-        try:
-            response = await call_next(request)
-        except Exception:
-            error_counter.add(1)
-
-            duration = time.time() - start_time
-            duration_histogram.record(
-                duration,
-                {
-                    "method": request.method,
-                    "path": request.url.path,
-                    "status_code": "500",
-                },
-            )
-            return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
-
-        if response.status_code == 500:
-            error_counter.add(1)
-
-        duration = time.time() - start_time
-        duration_histogram.record(
-            duration,
-            {
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": str(response.status_code),
-            },
-        )
-
-        return response
-
-    return metrics_middleware
