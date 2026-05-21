@@ -29,6 +29,12 @@ settings:
   components:
     - IoT
     - DACH TT
+
+  # (Optional) Jira team to assign to the created issue
+  # Use the team's UUID, which can be found by fetching an existing Jira issue
+  # that already has the team set and inspecting the `customfield_10001` field:
+  #   curl -u user@example.com:TOKEN https://your-instance.atlassian.net/rest/api/2/issue/PROJ-123
+  team: "bf14f26e-a188-4f4a-8ad4-e2686fb2ca90"
       
   # (Optional) GitHub labels. Only issues with one of those labels will be synchronized.
   # If not specified, all issues will be synchronized

@@ -358,6 +358,9 @@ async def bot(request: Request, payload: dict = Body(...)):
             if component in allowed_components
         ]
 
+    if settings["team"]:
+        issue_dict["customfield_10001"] = {"id": settings["team"]}
+
     opened_status = settings["status_mapping"]["opened"]
     closed_status = settings["status_mapping"]["closed"]
     not_planned_status = settings["status_mapping"].get("not_planned", closed_status)

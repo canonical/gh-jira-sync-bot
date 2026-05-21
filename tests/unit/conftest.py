@@ -18,6 +18,7 @@ def _default_settings(**overrides):
     settings = {
         "settings": {
             "components": None,
+            "team": None,
             "labels": ["bug"],
             "add_gh_comment": False,
             "add_gh_synced_label": False,
