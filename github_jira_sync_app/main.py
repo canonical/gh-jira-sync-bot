@@ -4,9 +4,11 @@ import json
 import logging
 import os
 import traceback
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
+import anyio
 import yaml
 from dotenv import load_dotenv
 from fastapi import Body
@@ -21,6 +23,7 @@ from github.Repository import Repository
 from jira import JIRA
 from mistletoe import Document  # type: ignore[import]
 from mistletoe.contrib.jira_renderer import JIRARenderer  # type: ignore[import]
+from starlette.concurrency import run_in_threadpool
 from yaml.scanner import ScannerError
 
 from .instrumentation.metrics import setup_metrics
@@ -109,8 +112,20 @@ git_integration = GithubIntegration(
     app_key,
 )
 
+# Maximum number of webhooks processed concurrently. Blocking GitHub/Jira/Redis
+# I/O runs off the event loop in a worker thread pool, so a burst of webhooks
+# cannot block the loop; this cap also prevents overloading Jira/GitHub.
+max_concurrent_webhooks = int(os.getenv("MAX_CONCURRENT_WEBHOOKS", "20"))
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(_app: "FastAPI"):
+    """Bound the worker thread pool used to process webhooks off the event loop."""
+    anyio.to_thread.current_default_thread_limiter().total_tokens = max_concurrent_webhooks
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 metrics_instruments = setup_metrics(app)
 
@@ -199,6 +214,15 @@ def _generate_summary(settings: dict, issue: Issue):
 
 @app.post("/")
 async def bot(request: Request, payload: dict = Body(...)):
+    """Receive a GitHub webhook and dispatch it for processing.
+
+    Signature verification is cheap and stays on the event loop. The actual
+    GitHub<->Jira synchronization performs blocking network I/O, so it runs in a
+    bounded thread pool to keep the event loop responsive under bursts of
+    concurrent webhooks. The real result is still returned synchronously (2xx on
+    success, 5xx on failure) so GitHub's webhook redelivery can retry failures
+    (e.g. an expired Jira token).
+    """
     body_ = await request.body()
     signature_ = request.headers.get("x-hub-signature-256")
     webhook_id = request.headers.get("X-GitHub-Delivery", "unknown")
@@ -207,6 +231,16 @@ async def bot(request: Request, payload: dict = Body(...)):
 
     logger.info(f"Received webhook {webhook_id}, action={payload.get('action', 'N/A')}")
 
+    return await run_in_threadpool(process_webhook, payload, webhook_id)
+
+
+def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
+    """Synchronously process a single GitHub webhook (runs in a worker thread).
+
+    Contains all blocking GitHub/Jira/Redis I/O. Returning a dict yields a 2xx
+    response; raising an exception propagates as a 5xx so GitHub can redeliver
+    the webhook and the work can be retried.
+    """
     if not all(k in payload.keys() for k in ["action", "issue"]):
         return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
 
