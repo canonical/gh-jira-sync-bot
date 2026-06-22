@@ -201,8 +201,11 @@ def _generate_summary(settings: dict, issue: Issue):
 async def bot(request: Request, payload: dict = Body(...)):
     body_ = await request.body()
     signature_ = request.headers.get("x-hub-signature-256")
+    webhook_id = request.headers.get("X-GitHub-Delivery", "unknown")
 
     verify_signature(body_, os.getenv("WEBHOOK_SECRET"), signature_)
+
+    logger.info(f"Received webhook {webhook_id}, action={payload.get('action', 'N/A')}")
 
     if not all(k in payload.keys() for k in ["action", "issue"]):
         return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
@@ -304,11 +307,14 @@ async def bot(request: Request, payload: dict = Body(...)):
     if redis_client:
         dedup_key = f"jira:create:{gh_issue.html_url}"
         if redis_client.setnx(dedup_key, "1"):
-            # set expiration to 20 seconds
-            redis_client.expire(dedup_key, 20)
+            # set expiration to 30 seconds to prevent duplicate processing
+            redis_client.expire(dedup_key, 30)
+            logger.info(f"Webhook {webhook_id}: Redis lock acquired for {gh_issue.html_url}")
         else:
             msg = "This issue is already being processed. Ignoring."
-            logger.warning(f"{repo_name}: {msg}")
+            logger.warning(
+                f"{repo_name}: {msg} (webhook_id={webhook_id}, issue={gh_issue.html_url})"
+            )
             return {"msg": msg}
 
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
@@ -393,12 +399,7 @@ async def bot(request: Request, payload: dict = Body(...)):
         # need this since we allow to sync issue on many actions. And if someone commented
         # we first create a Jira issue, then create a comment
         msg = "Issue was created in Jira. "
-
-        if redis_client:
-            redis_client.delete(dedup_key)
     else:
-        if redis_client:
-            redis_client.delete(dedup_key)
 
         jira_issue = existing_issues[0]
         if payload["action"] == "closed":
