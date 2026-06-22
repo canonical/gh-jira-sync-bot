@@ -525,7 +525,7 @@ class TestRedisDedup:
         assert "Issue was created in Jira" in response.json()["msg"]
         mock_redis.setnx.assert_called_once()
         mock_redis.expire.assert_called_once()
-        mock_redis.delete.assert_called_once()
+        mock_redis.delete.assert_not_called()
 
     def test_redis_dedup_rejects_duplicate(self, signature_mock, mock_github, mock_jira):
         mock_redis = MagicMock()
@@ -546,4 +546,4 @@ class TestRedisDedup:
             response = client.post("/", json=_get_json("issue_closed_as_completed.json"))
         assert response.status_code == 200
         assert response.json() == {"msg": "Closed existing Jira Issue"}
-        mock_redis.delete.assert_called_once()
+        mock_redis.delete.assert_not_called()
