@@ -1,5 +1,6 @@
 settings:
   components:
+  team:
   labels:
   add_gh_comment: false
   add_gh_synced_label: false

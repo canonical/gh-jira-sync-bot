@@ -236,6 +236,30 @@ class TestCreateNewJiraIssue:
         fields = call_kwargs[1]["fields"]
         assert fields["components"] == [{"name": "Frontend"}]
 
+    def test_create_with_team(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(team="bf14f26e-a188-4f4a-8ad4-e2686fb2ca90")
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert fields["customfield_10001"] == {"id": "bf14f26e-a188-4f4a-8ad4-e2686fb2ca90"}
+
+    def test_create_without_team(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(team=None)
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert "customfield_10001" not in fields
+
     def test_create_with_label_mapping(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
 
