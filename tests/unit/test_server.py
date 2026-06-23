@@ -130,7 +130,7 @@ class TestConfigValidation:
         contents = MagicMock()
         contents.decoded_content = b""
         mock_github.repo.get_contents.return_value = contents
-        response = client.post("/", json=_get_json("crash.json"))
+        response = client.post("/", json=_get_json("issue_edited.json"))
         assert response.status_code == 200
         assert "empty" in response.json()["msg"].lower()
 
