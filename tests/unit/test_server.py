@@ -120,6 +120,20 @@ class TestConfigValidation:
         assert response.status_code == 200
         assert "invalid" in response.json()["msg"].lower()
 
+    def test_config_file_empty(self, signature_mock, mock_github):
+        """An empty .jira_sync_config.yaml should be handled gracefully (no 500).
+
+        Reproduces the crash from crash.json: an `edited` webhook on a repo whose
+        config file is empty. ``yaml.safe_load("")`` returns ``None`` which used to
+        blow up ``merge_dicts`` with a ``TypeError`` (HTTP 500).
+        """
+        contents = MagicMock()
+        contents.decoded_content = b""
+        mock_github.repo.get_contents.return_value = contents
+        response = client.post("/", json=_get_json("issue_edited.json"))
+        assert response.status_code == 200
+        assert "empty" in response.json()["msg"].lower()
+
     def test_missing_jira_project_key(self, signature_mock, mock_github):
         mock_github.set_config(
             {
