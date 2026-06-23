@@ -309,6 +309,11 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         logger.error(f"{repo_name}: {msg}")
         return {"msg": msg}
 
+    if not settings:
+        msg = ".github/.jira_sync_config.yaml file is empty."
+        logger.warning(f"{repo_name}: {msg}")
+        return {"msg": msg}
+
     merge_dicts(settings, DEFAULT_SETTINGS)
 
     settings = settings["settings"]
