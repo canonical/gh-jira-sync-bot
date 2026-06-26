@@ -58,6 +58,21 @@ settings:
   label_mapping:
     enhancement: Story
 
+  # (Optional) Dictionary mapping GitHub native issue types to Jira issue types.
+  # GitHub issue types (https://docs.github.com/en/issues/tracking-your-work-with-issues/configuring-issues/managing-issue-types-in-an-organization)
+  # are an organization-level classification (e.g. Bug, Feature, Task) that is
+  # distinct from labels. Matching is case-insensitive.
+  # Jira issue type is resolved with the following precedence:
+  #   1. GitHub label mapped via `label_mapping`
+  #   2. GitHub native issue type mapped via `type_mapping`
+  #   3. Default `Bug`
+  # The bot also reacts to the `typed` and `untyped` issue events, so changing an
+  # issue's type in GitHub updates the corresponding Jira issue type.
+  type_mapping:
+    Bug: Bug
+    Feature: Story
+    Task: Task
+
   # (Optional) JIRA issue's summary
   # This field can be used to customize the JIRA issue's summary (title).
   # The value of the field will be passed to the python

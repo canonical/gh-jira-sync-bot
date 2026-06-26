@@ -62,7 +62,16 @@ gh_synced_label_name = "synced-to-jira"
 with open(Path(__file__).parent / "settings.yaml") as file:
     _file_settings = yaml.safe_load(file)
 
-allowed_gh_actions = ["opened", "edited", "closed", "reopened", "labeled", "unlabeled"]
+allowed_gh_actions = [
+    "opened",
+    "edited",
+    "closed",
+    "reopened",
+    "labeled",
+    "unlabeled",
+    "typed",
+    "untyped",
+]
 
 
 class JSONFormatter(logging.Formatter):
@@ -210,6 +219,37 @@ def _generate_summary(settings: dict, issue: Issue):
             logger.error(msg)
 
     return issue.title
+
+
+def _determine_issue_type(settings: dict, gh_issue_payload: dict, payload_labels: set) -> str:
+    """Determine the Jira issue type to use for a GitHub issue.
+
+    GitHub natively supports issue types (``issue.type``), an organization-level
+    classification (e.g. "Bug", "Feature", "Task") that is distinct from labels.
+
+    Labels can be more specific than the coarse GitHub native types, so they are
+    considered first. The Jira issue type is resolved using the following
+    precedence:
+        1. A GitHub label mapped via ``label_mapping``.
+        2. The GitHub native issue type mapped via ``type_mapping`` (case-insensitive).
+        3. The default ``Bug`` type.
+    """
+    label_mapping = settings.get("label_mapping") or {}
+    for label in payload_labels:
+        if label in label_mapping:
+            return label_mapping[label]
+
+    type_mapping = settings.get("type_mapping") or {}
+    if type_mapping:
+        gh_type = gh_issue_payload.get("type")
+        gh_type_name = gh_type.get("name") if isinstance(gh_type, dict) else None
+        if gh_type_name:
+            lowered_mapping = {str(key).lower(): value for key, value in type_mapping.items()}
+            mapped_type = lowered_mapping.get(gh_type_name.lower())
+            if mapped_type:
+                return mapped_type
+
+    return "Bug"
 
 
 @app.post("/")
@@ -377,12 +417,7 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         gh_issue_body=issue_body,
     )
 
-    issue_type = "Bug"
-    if settings["label_mapping"]:
-        for label in payload_labels:
-            if label in settings["label_mapping"]:
-                issue_type = settings["label_mapping"][label]
-                break
+    issue_type = _determine_issue_type(settings, payload["issue"], payload_labels)
 
     issue_dict: dict[str, Any] = {
         "project": {"key": settings["jira_project_key"]},
@@ -465,7 +500,7 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
                 }
 
             return {"msg": "No change to Jira Issue labels required"}
-        elif payload["action"] == "edited":
+        elif payload["action"] in ("edited", "typed", "untyped"):
             if settings["components"]:
                 # need to append components to the existing list
                 for component in jira_issue.fields.components:

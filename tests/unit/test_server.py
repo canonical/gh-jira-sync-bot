@@ -248,6 +248,89 @@ class TestCreateNewJiraIssue:
         fields = call_kwargs[1]["fields"]
         assert fields["issuetype"] == {"name": "Defect"}
 
+    def test_create_with_type_mapping(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(type_mapping={"Feature": "Story", "Bug": "Defect"})
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        payload = _get_json("issue_labeled_correct.json")
+        payload["issue"]["type"] = {"name": "Feature"}
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert fields["issuetype"] == {"name": "Story"}
+
+    def test_type_mapping_is_case_insensitive(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(type_mapping={"feature": "Story"})
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        payload = _get_json("issue_labeled_correct.json")
+        payload["issue"]["type"] = {"name": "Feature"}
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert fields["issuetype"] == {"name": "Story"}
+
+    def test_label_mapping_takes_precedence_over_type_mapping(
+        self, signature_mock, mock_github, mock_jira
+    ):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(
+            type_mapping={"Feature": "Story"},
+            label_mapping={"bug": "Defect"},
+        )
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        payload = _get_json("issue_labeled_correct.json")
+        payload["issue"]["type"] = {"name": "Feature"}
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert fields["issuetype"] == {"name": "Defect"}
+
+    def test_falls_back_to_type_mapping_when_label_unmapped(
+        self, signature_mock, mock_github, mock_jira
+    ):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(
+            type_mapping={"Feature": "Story"},
+            label_mapping={"enhancement": "Improvement"},
+        )
+        mock_github.set_config(settings)
+        # Issue label has no mapping configured
+        mock_github.issue.labels = [_make_label("bug")]
+        payload = _get_json("issue_labeled_correct.json")
+        payload["issue"]["type"] = {"name": "Feature"}
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert fields["issuetype"] == {"name": "Story"}
+
+    def test_falls_back_to_bug_when_no_type_or_label_match(
+        self, signature_mock, mock_github, mock_jira
+    ):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(type_mapping={"Feature": "Story"})
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        payload = _get_json("issue_labeled_correct.json")
+        payload["issue"]["type"] = None
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        call_kwargs = mock_jira.client.create_issue.call_args
+        fields = call_kwargs[1]["fields"]
+        assert fields["issuetype"] == {"name": "Bug"}
+
     def test_create_with_custom_summary(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
 
@@ -325,6 +408,40 @@ class TestExistingJiraIssue:
         assert response.status_code == 200
         assert response.json() == {"msg": "Updated existing Jira Issue"}
         mock_jira.existing_issue.update.assert_called_once()
+
+    def test_typed_updates_existing_issue_type(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(type_mapping={"Feature": "Story"})
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        mock_jira.set_existing_issues()
+        payload = _get_json("issue_edited.json")
+        payload["action"] = "typed"
+        payload["issue"]["type"] = {"name": "Feature"}
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        assert response.json() == {"msg": "Updated existing Jira Issue"}
+        call_fields = mock_jira.existing_issue.update.call_args[1]["fields"]
+        assert call_fields["issuetype"] == {"name": "Story"}
+
+    def test_untyped_reverts_existing_issue_type(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(
+            type_mapping={"Feature": "Story"}, label_mapping={"bug": "Defect"}
+        )
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        mock_jira.set_existing_issues()
+        payload = _get_json("issue_edited.json")
+        payload["action"] = "untyped"
+        payload["issue"]["type"] = None
+        response = client.post("/", json=payload)
+        assert response.status_code == 200
+        assert response.json() == {"msg": "Updated existing Jira Issue"}
+        call_fields = mock_jira.existing_issue.update.call_args[1]["fields"]
+        assert call_fields["issuetype"] == {"name": "Defect"}
 
     def test_edit_existing_issue_appends_components(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
