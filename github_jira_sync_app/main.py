@@ -360,7 +360,7 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
     jira_task_desc_match = f"This issue was created from GitHub Issue {gh_issue.html_url}"
     existing_issues = jira.enhanced_search_issues(
         rf'project="{settings["jira_project_key"]}" AND '
-        + rf'description ~"\"{jira_task_desc_match}\""',
+        + rf'description ~"{jira_task_desc_match}"',
         json_result=False,
     )
     assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
