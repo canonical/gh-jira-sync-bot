@@ -343,19 +343,6 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
-    if redis_client:
-        dedup_key = f"jira:create:{gh_issue.html_url}"
-        if redis_client.setnx(dedup_key, "1"):
-            # set expiration to 30 seconds to prevent duplicate processing
-            redis_client.expire(dedup_key, 30)
-            logger.info(f"Webhook {webhook_id}: Redis lock acquired for {gh_issue.html_url}")
-        else:
-            msg = "This issue is already being processed. Ignoring."
-            logger.warning(
-                f"{repo_name}: {msg} (webhook_id={webhook_id}, issue={gh_issue.html_url})"
-            )
-            return {"msg": msg}
-
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     jira_task_desc_match = f"This issue was created from GitHub Issue {gh_issue.html_url}"
     existing_issues = jira.enhanced_search_issues(
@@ -423,6 +410,19 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
 
         if payload["action"] == "closed":
             return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
+
+        if redis_client:
+            dedup_key = f"jira:create:{gh_issue.html_url}"
+            if redis_client.setnx(dedup_key, "1"):
+                # set expiration to 30 seconds to prevent duplicate processing
+                redis_client.expire(dedup_key, 30)
+                logger.info(f"Webhook {webhook_id}: Redis lock acquired for {gh_issue.html_url}")
+            else:
+                msg = "This issue is already being processed. Ignoring."
+                logger.warning(
+                    f"{repo_name}: {msg} (webhook_id={webhook_id}, issue={gh_issue.html_url})"
+                )
+                return {"msg": msg}
 
         new_issue = jira.create_issue(fields=issue_dict)
         existing_issues.append(new_issue)
