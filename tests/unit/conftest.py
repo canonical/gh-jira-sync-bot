@@ -32,6 +32,7 @@ def _default_settings(**overrides):
                 "not_planned": "Rejected",
             },
             "summary": None,
+            "gh_comment_body_template": None,
         }
     }
     settings["settings"].update(overrides)

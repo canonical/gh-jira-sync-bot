@@ -49,7 +49,7 @@ PLEASE KEEP ALL THE CONVERSATION ON GITHUB
 {gh_issue_body}
 """
 
-gh_comment_body_template = """
+gh_comment_body_template_default = """
 Thank you for reporting your feedback to us!
 
 The internal ticket has been created: {jira_issue_link}.
@@ -430,8 +430,20 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         if settings.get("add_gh_synced_label", False):
             gh_issue.add_to_labels(gh_synced_label_name)
 
+        gh_comment_template = (
+            settings["gh_comment_body_template"] or gh_comment_body_template_default
+        )
         if settings["add_gh_comment"]:
-            gh_comment_body = gh_comment_body_template.format(jira_issue_link=new_issue.permalink())
+            try:
+                if "{jira_issue_link}" not in gh_comment_template:
+                    raise ValueError()
+
+                gh_comment_body = gh_comment_template.format(jira_issue_link=new_issue.permalink())
+            except (KeyError, ValueError):
+                # revert back to default template if we get issues (maybe user provided template
+                # has a missing key)
+                gh_comment_template = gh_comment_body_template_default
+                gh_comment_body = gh_comment_template.format(jira_issue_link=new_issue.permalink())
 
             gh_issue.create_comment(gh_comment_body)
 

@@ -11,3 +11,4 @@ settings:
   status_mapping:
   summary:
   sync_labels: false
+  gh_comment_body_template:

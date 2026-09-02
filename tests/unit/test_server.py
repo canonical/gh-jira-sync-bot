@@ -280,6 +280,34 @@ class TestCreateNewJiraIssue:
         comment_body = mock_github.issue.create_comment.call_args[0][0]
         assert "TEST-1" in comment_body or "jira" in comment_body.lower()
 
+    def test_create_with_user_gh_comment(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(
+            add_gh_comment=True, gh_comment_body_template="A TEST TEMPLATE for {jira_issue_link}"
+        )
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        mock_github.issue.create_comment.assert_called_once()
+        comment_body = mock_github.issue.create_comment.call_args[0][0]
+        assert comment_body == "A TEST TEMPLATE for https://my-jira.atlassian.net/browse/TEST-1"
+
+    def test_create_with_user_gh_comment_missing_key(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(
+            add_gh_comment=True, gh_comment_body_template="A TEST TEMPLATE for"
+        )
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        mock_github.issue.create_comment.assert_called_once()
+        comment_body = mock_github.issue.create_comment.call_args[0][0]
+        assert "TEST-1" in comment_body or "jira" in comment_body.lower()
+
     def test_close_nonexistent_jira_issue_ignored(self, signature_mock, mock_github, mock_jira):
         mock_github.issue.labels = [_make_label("bug")]
         response = client.post("/", json=_get_json("issue_closed_as_completed.json"))
