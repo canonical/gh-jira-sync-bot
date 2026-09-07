@@ -361,6 +361,8 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
     existing_issues = jira.enhanced_search_issues(
         rf'project="{settings["jira_project_key"]}" AND '
         + rf'description ~"{jira_task_desc_match}"',
+        fields="labels,components",
+        maxResults=1,
         json_result=False,
     )
     assert isinstance(existing_issues, list), "Jira did not return a list of existing issues"
@@ -424,7 +426,7 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         if payload["action"] == "closed":
             return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
 
-        new_issue = jira.create_issue(fields=issue_dict)
+        new_issue = jira.create_issue(fields=issue_dict, prefetch=False)
         existing_issues.append(new_issue)
 
         if settings.get("add_gh_synced_label", False):
