@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from github import GithubException
@@ -155,6 +156,21 @@ class TestConfigValidation:
         response = client.post("/", json=_get_json("issue_labeled_correct.json"))
         assert response.status_code == 200
         assert "Jira project key" in response.json()["msg"]
+
+    @pytest.mark.parametrize("bad_key", [" ", "\t", "lowercase", "TE ST", "1TEST"])
+    def test_invalid_jira_project_key(self, signature_mock, mock_github, mock_jira, bad_key):
+        """Whitespace-only or malformed keys (e.g. corrupted config) must be rejected.
+
+        Regression test for a config where `jira_project_key: " "` passed the old
+        truthiness check and was sent to Jira, failing with a 400 error.
+        """
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(jira_project_key=bad_key))
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert "Jira project key" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
 
     def test_missing_status_mapping(self, signature_mock, mock_github):
         mock_github.set_config(
@@ -442,6 +458,32 @@ class TestSyncedLabelFlow:
         response = client.post("/", json=_get_json("issue_labeled_synced_to_jira.json"))
         assert response.status_code == 200
         assert "Purposefully ignored" in response.json()["msg"]
+
+
+# ---------------------------------------------------------------------------
+# Jira failure logging (troubleshooting context)
+# ---------------------------------------------------------------------------
+class TestJiraFailureLogging:
+    def test_jira_error_logs_repo_and_project_context(
+        self, signature_mock, mock_github, mock_jira, caplog
+    ):
+        """On a Jira API failure, the error log must include enough context
+
+        (repo, webhook id, project key, issue URL) to troubleshoot without
+        having to correlate separate log lines.
+        """
+        mock_github.issue.labels = [_make_label("bug")]
+        mock_jira.client.create_issue.side_effect = RuntimeError("Jira is down")
+
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 500
+
+        error_messages = [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
+        assert any("Failed to sync with Jira" in msg for msg in error_messages)
+        combined = " ".join(error_messages)
+        assert "beliaev-maksim/test-ci" in combined
+        assert "jira_project_key=TEST" in combined
+        assert mock_github.issue.html_url in combined
 
     def test_sync_unlabelled_for_existing_issue(self, signature_mock, mock_github, mock_jira):
         """Test syncing removed labels for existing issue."""

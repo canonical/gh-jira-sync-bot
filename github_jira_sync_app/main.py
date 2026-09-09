@@ -3,6 +3,7 @@ import hmac
 import json
 import logging
 import os
+import re
 import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -58,6 +59,9 @@ The internal ticket has been created: {jira_issue_link}.
 """
 
 gh_synced_label_name = "synced-to-jira"
+
+# Jira Cloud project keys: start with a letter, followed by uppercase letters/digits.
+JIRA_PROJECT_KEY_RE = re.compile(r"^[A-Z][A-Z0-9]+$")
 
 with open(Path(__file__).parent / "settings.yaml") as file:
     _file_settings = yaml.safe_load(file)
@@ -318,10 +322,15 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
 
     settings = settings["settings"]
 
-    if not settings["jira_project_key"]:
-        msg = "Jira project key is not specified. Add `jira_project_key` key to the settings file."
+    jira_project_key = str(settings.get("jira_project_key") or "").strip()
+    if not jira_project_key or not JIRA_PROJECT_KEY_RE.match(jira_project_key):
+        msg = (
+            "Jira project key is not specified or invalid. Add a valid `jira_project_key` "
+            "(uppercase letters/digits, e.g. `MTC`) to the settings file."
+        )
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
+    settings["jira_project_key"] = jira_project_key
 
     if not settings["status_mapping"]:
         msg = "Status mapping is not specified. Add `status_mapping` key to the settings file."
@@ -356,6 +365,32 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
             )
             return {"msg": msg}
 
+    try:
+        return _sync_with_jira(
+            payload=payload,
+            settings=settings,
+            gh_issue=gh_issue,
+            update_jira_labels=update_jira_labels,
+            allowed_labels=allowed_labels,
+            payload_labels=payload_labels,
+        )
+    except Exception:
+        logger.error(
+            f"{repo_name}: Failed to sync with Jira (webhook_id={webhook_id}, "
+            f"jira_project_key={jira_project_key}, issue={gh_issue.html_url})"
+        )
+        raise
+
+
+def _sync_with_jira(
+    payload: dict,
+    settings: dict,
+    gh_issue: Issue,
+    update_jira_labels: bool,
+    allowed_labels: list,
+    payload_labels: set,
+) -> dict:
+    """Create, update or transition the Jira issue matching the GitHub issue/action."""
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
     jira_task_desc_match = f"This issue was created from GitHub Issue {gh_issue.html_url}"
     existing_issues = jira.enhanced_search_issues(
