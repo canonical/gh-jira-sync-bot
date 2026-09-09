@@ -11,3 +11,5 @@ settings:
   status_mapping:
   summary:
   sync_labels: false
+  ignore_issues:
+    titles:

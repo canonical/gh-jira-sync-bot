@@ -77,6 +77,15 @@ settings:
   # (Optional) set to True if GitHub issue labels should be synced to Jira.
   # Note, that will override all the labels in Jira.
   sync_labels: false
+
+  # (Optional) Skip syncing issues whose title exactly matches (case
+  # insensitive) one of the following strings. Applies to every event
+  # (issue actions and comments alike), so once an issue's title matches,
+  # it is never synced/updated in Jira. Useful for bot-managed issues such
+  # as Renovate's recurring "Dependency Dashboard" issue.
+  ignore_issues:
+    titles:
+      - "Dependency Dashboard"
 ```
 
 

@@ -203,6 +203,60 @@ class TestConfigValidation:
 
 
 # ---------------------------------------------------------------------------
+# ignore_issues config (deny-list by title)
+# ---------------------------------------------------------------------------
+class TestIgnoreIssues:
+    def test_matching_title_skips_issue_action(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(ignore_issues={"titles": ["Dependency Dashboard"]})
+        mock_github.set_config(settings)
+        mock_github.issue.title = "Dependency Dashboard"
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert "ignore_issues" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_matching_title_case_insensitive(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(ignore_issues={"titles": ["dependency dashboard"]})
+        mock_github.set_config(settings)
+        mock_github.issue.title = "Dependency Dashboard"
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert "ignore_issues" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_matching_title_skips_comment_event(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(ignore_issues={"titles": ["Dependency Dashboard"]})
+        mock_github.set_config(settings)
+        mock_github.issue.title = "Dependency Dashboard"
+        mock_github.issue.labels = [_make_label("bug")]
+        mock_jira.set_existing_issues()
+        response = client.post("/", json=_get_json("comment_created_by_user.json"))
+        assert response.status_code == 200
+        assert "ignore_issues" in response.json()["msg"]
+        mock_jira.client.add_comment.assert_not_called()
+
+    def test_non_matching_title_still_syncs(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(ignore_issues={"titles": ["Dependency Dashboard"]})
+        mock_github.set_config(settings)
+        mock_github.issue.title = "A regular bug report"
+        mock_github.issue.labels = [_make_label("bug")]
+        response = client.post("/", json=_get_json("issue_labeled_correct.json"))
+        assert response.status_code == 200
+        assert "Issue was created in Jira" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
 # No existing Jira issue - create new
 # ---------------------------------------------------------------------------
 class TestCreateNewJiraIssue:
