@@ -193,6 +193,17 @@ def verify_signature(payload_body, secret_token, signature_header):
         raise HTTPException(status_code=403, detail="Request signatures didn't match!")
 
 
+def _is_ignored_issue(settings: dict, gh_issue: Issue) -> bool:
+    """Check whether the issue should be skipped entirely based on `ignore_issues` config.
+
+    Currently only supports matching against the issue title, using a plain
+    case-insensitive exact match (no regex support).
+    """
+    ignore_issues = settings.get("ignore_issues") or {}
+    ignored_titles = [str(title).lower() for title in (ignore_issues.get("titles") or [])]
+    return gh_issue.title.lower() in ignored_titles
+
+
 def _generate_summary(settings: dict, issue: Issue):
     """Allow customizing the JIRA issue's summary field.
 
@@ -338,6 +349,11 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         return {"msg": msg}
 
     gh_issue = Issue(git_connection.requester, {}, payload["issue"], completed=True)
+
+    if _is_ignored_issue(settings, gh_issue):
+        msg = "Issue title matches `ignore_issues` config. Ignoring."
+        logger.info(f"{repo_name}: {msg}")
+        return {"msg": msg}
 
     labels = settings["labels"] or []
     allowed_labels = [str(label).lower() for label in labels]

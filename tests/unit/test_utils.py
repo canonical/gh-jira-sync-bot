@@ -4,6 +4,7 @@ import pytest
 from fastapi import HTTPException
 
 from github_jira_sync_app.main import _generate_summary
+from github_jira_sync_app.main import _is_ignored_issue
 from github_jira_sync_app.main import merge_dicts
 from github_jira_sync_app.main import truncate_description
 from github_jira_sync_app.main import verify_signature
@@ -100,6 +101,42 @@ class TestGenerateSummary:
         issue = self._make_issue()
         result = _generate_summary({"summary": 123}, issue)
         assert result == "Test Issue Title"
+
+
+class TestIsIgnoredIssue:
+    def _make_issue(self, title="Test Issue Title"):
+        issue = MagicMock()
+        issue.title = title
+        return issue
+
+    def test_no_ignore_issues_configured(self):
+        issue = self._make_issue()
+        assert _is_ignored_issue({}, issue) is False
+
+    def test_empty_titles_list(self):
+        issue = self._make_issue()
+        settings = {"ignore_issues": {"titles": []}}
+        assert _is_ignored_issue(settings, issue) is False
+
+    def test_exact_title_match(self):
+        issue = self._make_issue(title="Dependency Dashboard")
+        settings = {"ignore_issues": {"titles": ["Dependency Dashboard"]}}
+        assert _is_ignored_issue(settings, issue) is True
+
+    def test_title_match_is_case_insensitive(self):
+        issue = self._make_issue(title="dependency dashboard")
+        settings = {"ignore_issues": {"titles": ["Dependency Dashboard"]}}
+        assert _is_ignored_issue(settings, issue) is True
+
+    def test_non_matching_title(self):
+        issue = self._make_issue(title="Some other issue")
+        settings = {"ignore_issues": {"titles": ["Dependency Dashboard"]}}
+        assert _is_ignored_issue(settings, issue) is False
+
+    def test_ignore_issues_none(self):
+        issue = self._make_issue()
+        settings = {"ignore_issues": None}
+        assert _is_ignored_issue(settings, issue) is False
 
 
 class TestVerifySignature:
