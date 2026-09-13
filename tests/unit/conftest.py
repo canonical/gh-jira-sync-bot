@@ -26,6 +26,7 @@ def _default_settings(**overrides):
             "epic_key": None,
             "jira_project_key": "TEST",
             "label_mapping": None,
+            "type_mapping": None,
             "status_mapping": {
                 "opened": "To Do",
                 "closed": "Done",

@@ -8,6 +8,7 @@ settings:
   epic_key:
   jira_project_key:
   label_mapping:
+  type_mapping:
   status_mapping:
   summary:
   sync_labels: false
