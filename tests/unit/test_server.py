@@ -11,7 +11,7 @@ from github import GithubException
 
 UNITTESTS_DIR = Path(__file__).parent
 load_dotenv(Path(__file__).parent / "dumm_env", verbose=True)
-assert os.environ["JIRA_INSTANCE"]
+assert os.environ["APP_JIRA_INSTANCE"]
 
 # import only after we set dummy environment
 from github_jira_sync_app.main import app  # noqa: E402

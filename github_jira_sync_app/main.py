@@ -33,13 +33,13 @@ jira_text_renderer = JIRARenderer()
 
 load_dotenv()
 
-jira_instance_url = os.getenv("JIRA_INSTANCE", "")
-jira_username = os.getenv("JIRA_USERNAME", "")
-jira_token = os.getenv("JIRA_TOKEN", "")
+jira_instance_url = os.getenv("APP_JIRA_INSTANCE", "")
+jira_username = os.getenv("APP_JIRA_USERNAME", "")
+jira_token = os.getenv("APP_JIRA_TOKEN", "")
 
-assert jira_instance_url, "URL to your Jira instance must be provided via JIRA_INSTANCE env var"
-assert jira_username, "Jira username must be provided via JIRA_USERNAME env var"
-assert jira_token, "Jira API token must be provided via JIRA_TOKEN env var"
+assert jira_instance_url, "URL to your Jira instance must be provided via APP_JIRA_INSTANCE env var"
+assert jira_username, "Jira username must be provided via APP_JIRA_USERNAME env var"
+assert jira_token, "Jira API token must be provided via APP_JIRA_TOKEN env var"
 
 jira_issue_description_template = """
 This issue was created from GitHub Issue {gh_issue_url}
@@ -85,30 +85,25 @@ class JSONFormatter(logging.Formatter):
 
 
 def define_logger():
-    """Define logger to output to the file and to STDOUT."""
+    """Define logger to output to STDOUT."""
     log = logging.getLogger("sync-bot-server")
     log.setLevel(logging.DEBUG)
     formatter = JSONFormatter()
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
-
-    log_file = os.environ.get("SYNC_BOT_LOGFILE", "sync_bot.log")
-    file_handler = logging.FileHandler(filename=log_file)
-    file_handler.setFormatter(formatter)
-    log.addHandler(file_handler)
     return log
 
 
 logger = define_logger()
 
 
-_env_settings = yaml.safe_load(os.getenv("DEFAULT_BOT_CONFIG", "{}"))
+_env_settings = yaml.safe_load(os.getenv("APP_DEFAULT_BOT_CONFIG", "{}"))
 
 DEFAULT_SETTINGS = _env_settings or _file_settings
 
-app_id = os.getenv("APP_ID", "")
-app_key = os.getenv("PRIVATE_KEY", "")
+app_id = os.getenv("APP_GITHUB_APP_ID", "")
+app_key = os.getenv("APP_GITHUB_PRIVATE_KEY", "")
 app_key = app_key.replace("\\n", "\n")  # since docker env variables do not support multiline
 
 git_integration = GithubIntegration(
@@ -119,7 +114,7 @@ git_integration = GithubIntegration(
 # Maximum number of webhooks processed concurrently. Blocking GitHub/Jira/Redis
 # I/O runs off the event loop in a worker thread pool, so a burst of webhooks
 # cannot block the loop; this cap also prevents overloading Jira/GitHub.
-max_concurrent_webhooks = int(os.getenv("MAX_CONCURRENT_WEBHOOKS", "20"))
+max_concurrent_webhooks = int(os.getenv("APP_MAX_CONCURRENT_WEBHOOKS", "20"))
 
 
 @asynccontextmanager
@@ -133,8 +128,8 @@ app = FastAPI(lifespan=lifespan)
 
 metrics_instruments = setup_metrics(app)
 
-redis_host = os.getenv("REDIS_HOST", "")
-redis_port = os.getenv("REDIS_PORT", "")
+redis_host = os.getenv("REDIS_DB_HOSTNAME", "")
+redis_port = os.getenv("REDIS_DB_PORT", "")
 redis_client = None
 if redis_host:
     import redis
@@ -180,7 +175,7 @@ def verify_signature(payload_body, secret_token, signature_header):
 
     Args:
         payload_body: original request body to verify (request.body())
-        secret_token: GitHub app webhook token (WEBHOOK_SECRET)
+        secret_token: GitHub app webhook token (APP_WEBHOOK_SECRET)
         signature_header: header received from GitHub (x-hub-signature-256)
 
     """
@@ -216,6 +211,12 @@ def _generate_summary(settings: dict, issue: Issue):
     return issue.title
 
 
+@app.get("/health")
+async def health():
+    """Liveness/readiness probe used by Pebble/Kubernetes."""
+    return {"status": "ok"}
+
+
 @app.post("/")
 async def bot(request: Request, payload: dict = Body(...)):
     """Receive a GitHub webhook and dispatch it for processing.
@@ -231,7 +232,7 @@ async def bot(request: Request, payload: dict = Body(...)):
     signature_ = request.headers.get("x-hub-signature-256")
     webhook_id = request.headers.get("X-GitHub-Delivery", "unknown")
 
-    verify_signature(body_, os.getenv("WEBHOOK_SECRET"), signature_)
+    verify_signature(body_, os.getenv("APP_WEBHOOK_SECRET"), signature_)
 
     logger.info(f"Received webhook {webhook_id}, action={payload.get('action', 'N/A')}")
 
@@ -251,7 +252,7 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
     if "pull_request" in payload["issue"]:
         return {"msg": "Action was triggered by PR comment. Ignoring."}
 
-    if payload["sender"]["login"] == os.getenv("BOT_NAME"):
+    if payload["sender"]["login"] == os.getenv("APP_BOT_NAME"):
         return {"msg": "Action was triggered by bot. Ignoring."}
 
     if "comment" in payload.keys():
@@ -525,9 +526,3 @@ def _sync_with_jira(
         return {"msg": "No action performed"}
     else:
         return {"msg": msg}
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=3000)

@@ -30,13 +30,10 @@ tox
 ## Build package
 package is built using:
 ```bash
-flit build
+python -m build
 ```
 
-## Build docker
+## Build rock
 ```bash
-version=0.0.5
-sudo docker buildx build -t github_jira_sync_app --output type=docker .
-sudo docker tag github_jira_sync_app ghcr.io/canonical/gh-jira-sync-bot:$version
-sudo docker push ghcr.io/canonical/gh-jira-sync-bot:$version
+rockcraft pack
 ```

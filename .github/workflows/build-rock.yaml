@@ -1,0 +1,53 @@
+name: Build and Publish Rock
+
+on:
+  push:
+    branches:
+      - main
+      - 12-factor-rock
+    tags:
+      - '*.*.*'
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build-rock:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v4
+
+    - name: Determine image repo and tag
+      run: |
+        OWNER="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+        echo "IMAGE=ghcr.io/${OWNER}/gh-jira-sync-bot" >> "$GITHUB_ENV"
+        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ ! "${TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag ${TAG} is not in semver format X.X.X"
+            exit 1
+          fi
+        else
+          # Branch push = testing only: per-branch moving tag, never a release tag.
+          BRANCH="${GITHUB_REF_NAME//\//-}"
+          TAG="${BRANCH}-test"
+        fi
+        echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
+    - name: Pack the rock
+      id: rockcraft
+      uses: canonical/craft-actions/rockcraft-pack@main
+
+    - name: Log in to GitHub Container Registry
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | sudo rockcraft.skopeo login \
+          --username "${{ github.actor }}" --password-stdin ghcr.io
+
+    - name: Push the rock to ghcr.io
+      run: |
+        sudo rockcraft.skopeo --insecure-policy copy \
+          "oci-archive:${{ steps.rockcraft.outputs.rock }}" \
+          "docker://${IMAGE}:${TAG}"

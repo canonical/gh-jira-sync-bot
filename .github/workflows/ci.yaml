@@ -29,8 +29,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install dependencies
       run: |
-        python -m pip install .[test]
+        python -m pip install tox
 
     - name: Run Pytest
       run: |
-        coverage run -m pytest . -v --cov github_jira_sync_app --cov tests --cov-report term-missing
+        tox -e py310
