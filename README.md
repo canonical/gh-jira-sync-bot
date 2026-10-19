@@ -30,8 +30,8 @@ settings:
     - IoT
     - DACH TT
       
-  # (Optional) GitHub labels. Only issues with one of those labels will be synchronized.
-  # If not specified, all issues will be synchronized
+  # (Optional) GitHub labels. Issues and enabled orphaned PRs must match at least one.
+  # If omitted or empty, no label restriction applies. PR tracking must still be enabled.
   labels:
     - bug
     - custom
@@ -43,6 +43,10 @@ settings:
   # corresponding ticket is successfully created in Jira.
   # This label serves as confirmation that the issue sync process was completed successfully.
   add_gh_synced_label: false
+
+  # (Optional) (Default: false) Create Jira tickets for newly opened PRs without linked issues.
+  # Subject to the label filter above.
+  sync_orphaned_prs: false
   
   # (Optional) (Default: true) Synchronize issue description from GitHub to Jira
   sync_description: true
@@ -79,6 +83,33 @@ settings:
   sync_labels: false
 ```
 
+### Orphaned Pull Requests
+
+Set `settings.sync_orphaned_prs: true` in `.github/.jira_sync_config.yaml` to create a Jira
+ticket when a pull request is opened without a linked GitHub issue. Omit the setting or set
+it to `false` to ignore PRs (the default).
+
+Linked issues are determined using GitHub's `closingIssuesReferences`, including issues
+linked through the PR's Development section or recognized closing keywords such as
+`Fixes #123`. Plain mentions of issues are not closing links. GitHub's rules for closing
+links apply, including restrictions for PRs targeting non-default branches. If the lookup
+fails, processing fails so the webhook can be retried rather than creating a speculative ticket.
+
+Orphaned PRs must match at least one configured `settings.labels` value (case-insensitive).
+PRs with no matching label, including unlabeled PRs, are ignored. If `settings.labels` is
+omitted, null, or an empty list, no label restriction applies. PR tracking must still be
+enabled with `settings.sync_orphaned_prs: true`. Labels are checked when the PR is opened;
+adding a matching label later does not trigger ticket creation.
+
+The ticket uses the existing project, summary, description, issue-type mapping, epic,
+and component settings, and includes the PR
+URL and author. Optional GitHub comments and synced labels also apply. Redelivered webhooks
+reuse the existing Jira ticket. Only the `opened` event is handled: later PR edits, comments,
+closing, merging, and links added after opening do not update or remove the ticket.
+
+Enable the Pull requests webhook event and permissions described below before enabling
+this setting.
+
 
 ## Server Configuration
 You need this section only if you deploy your own bot. However, even for this purpose I recommend to use https://github.com/canonical/charmed-gh-jira-sync-bot
@@ -102,6 +133,9 @@ This app is meant to be installed as a GitHub application.
      - Issues: read and write  
      - Metadata: read-only  
      - Single file: read-only (Path: `.github/.jira_sync_config.yaml`)  
+     - Pull requests: read-only when orphaned PR tracking is enabled; read and write if
+       `add_gh_comment` or `add_gh_synced_label` is also enabled
    - Subscribe to these events:  
      - Issues  
      - Issue comments  
+     - Pull requests (when orphaned PR tracking is enabled)

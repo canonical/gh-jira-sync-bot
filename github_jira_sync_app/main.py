@@ -42,7 +42,7 @@ assert jira_username, "Jira username must be provided via JIRA_USERNAME env var"
 assert jira_token, "Jira API token must be provided via JIRA_TOKEN env var"
 
 jira_issue_description_template = """
-This issue was created from GitHub Issue {gh_issue_url}
+This issue was created from GitHub {gh_item_type} {gh_issue_url}
 Issue was submitted by: {gh_issue_author}
 
 PLEASE KEEP ALL THE CONVERSATION ON GITHUB
@@ -245,16 +245,20 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
     response; raising an exception propagates as a 5xx so GitHub can redeliver
     the webhook and the work can be retried.
     """
-    if not all(k in payload.keys() for k in ["action", "issue"]):
-        return {"msg": "Action wasn't triggered by Issue action. Ignoring."}
+    is_pull_request = "pull_request" in payload
+    if not all(("action" in payload, "issue" in payload or is_pull_request)):
+        return {"msg": "Action wasn't triggered by an Issue or Pull Request action. Ignoring."}
 
-    if "pull_request" in payload["issue"]:
+    if not is_pull_request and "pull_request" in payload["issue"]:
         return {"msg": "Action was triggered by PR comment. Ignoring."}
 
     if payload["sender"]["login"] == os.getenv("BOT_NAME"):
         return {"msg": "Action was triggered by bot. Ignoring."}
 
-    if "comment" in payload.keys():
+    if is_pull_request:
+        if payload["action"] != "opened":
+            return {"msg": "Action wasn't triggered by PR opened. Ignoring."}
+    elif "comment" in payload.keys():
         # validate issue_comment webhooks
         if payload["action"] != "created":
             return {
@@ -322,6 +326,36 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
 
     settings = settings["settings"]
 
+    if is_pull_request:
+        if settings.get("sync_orphaned_prs", False) is not True:
+            return {"msg": "Orphaned PR tracking is disabled. Ignoring."}
+
+        _, result = git_connection.requester.requestJsonAndCheck(
+            "POST",
+            "/graphql",
+            input={
+                "query": """
+                    query($owner: String!, $name: String!, $number: Int!) {
+                        repository(owner: $owner, name: $name) {
+                            pullRequest(number: $number) {
+                                closingIssuesReferences(first: 1) { totalCount }
+                            }
+                        }
+                    }
+                """,
+                "variables": {
+                    "owner": owner,
+                    "name": payload["repository"]["name"],
+                    "number": payload["pull_request"]["number"],
+                },
+            },
+        )
+        if result.get("errors"):
+            raise RuntimeError("Unable to determine whether the PR is linked to an issue")
+        linked_issues = result["data"]["repository"]["pullRequest"]["closingIssuesReferences"]
+        if linked_issues["totalCount"]:
+            return {"msg": "PR is linked to an existing issue. Ignoring."}
+
     jira_project_key = str(settings.get("jira_project_key") or "").strip()
     if not jira_project_key or not JIRA_PROJECT_KEY_RE.match(jira_project_key):
         msg = (
@@ -337,7 +371,10 @@ def process_webhook(payload: dict, webhook_id: str = "unknown") -> dict:
         logger.warning(f"{repo_name}: {msg}")
         return {"msg": msg}
 
-    gh_issue = Issue(git_connection.requester, {}, payload["issue"], completed=True)
+    if is_pull_request:
+        gh_issue = repo.get_issue(payload["pull_request"]["number"])
+    else:
+        gh_issue = Issue(git_connection.requester, {}, payload["issue"], completed=True)
 
     labels = settings["labels"] or []
     allowed_labels = [str(label).lower() for label in labels]
@@ -392,7 +429,8 @@ def _sync_with_jira(
 ) -> dict:
     """Create, update or transition the Jira issue matching the GitHub issue/action."""
     jira = JIRA(jira_instance_url, basic_auth=(jira_username, jira_token))
-    jira_task_desc_match = f"This issue was created from GitHub Issue {gh_issue.html_url}"
+    gh_item_type = "Pull Request" if "pull_request" in payload else "Issue"
+    jira_task_desc_match = f"This issue was created from GitHub {gh_item_type} {gh_issue.html_url}"
     existing_issues = jira.enhanced_search_issues(
         rf'project="{settings["jira_project_key"]}" AND '
         + rf'description ~"\"{jira_task_desc_match}\""',
@@ -407,6 +445,7 @@ def _sync_with_jira(
         issue_body = jira_text_renderer.render(doc)
 
     issue_description = jira_issue_description_template.format(
+        gh_item_type=gh_item_type,
         gh_issue_url=gh_issue.html_url,
         gh_issue_author=gh_issue.user.login,
         gh_issue_body=issue_body,

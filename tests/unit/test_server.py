@@ -51,12 +51,12 @@ class TestEarlyExits:
     def test_missing_action_key(self, signature_mock):
         response = client.post("/", json={"issue": {}, "sender": {"login": "user"}})
         assert response.status_code == 200
-        assert "wasn't triggered by Issue action" in response.json()["msg"]
+        assert "wasn't triggered by an Issue or Pull Request action" in response.json()["msg"]
 
     def test_missing_issue_key(self, signature_mock):
         response = client.post("/", json={"action": "opened", "sender": {"login": "user"}})
         assert response.status_code == 200
-        assert "wasn't triggered by Issue action" in response.json()["msg"]
+        assert "wasn't triggered by an Issue or Pull Request action" in response.json()["msg"]
 
     def test_pr_comment_ignored(self, signature_mock):
         payload = _get_json("comment_created_by_user.json")
@@ -106,6 +106,180 @@ class TestEarlyExits:
 # ---------------------------------------------------------------------------
 # Config / validation branches (need GitHub mock)
 # ---------------------------------------------------------------------------
+class TestOrphanedPullRequests:
+    @pytest.fixture()
+    def pr_payload(self, mock_github):
+        payload = _get_json("pr_opened_without_label.json")
+        mock_github.issue.html_url = payload["pull_request"]["html_url"]
+        mock_github.issue.labels = []
+        mock_github.repo.get_issue.return_value = mock_github.issue
+        mock_github.github_client.requester.requestJsonAndCheck.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {"pullRequest": {"closingIssuesReferences": {"totalCount": 0}}}
+                }
+            },
+        )
+        return payload
+
+    def test_disabled_by_default(self, signature_mock, mock_github, mock_jira, pr_payload):
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "disabled" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+        mock_github.github_client.requester.requestJsonAndCheck.assert_not_called()
+
+    def test_explicitly_disabled(self, signature_mock, mock_github, mock_jira, pr_payload):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=False))
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "disabled" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+
+    @pytest.mark.parametrize("labels", [None, []])
+    def test_creates_ticket_without_label_filter(
+        self, signature_mock, mock_github, mock_jira, pr_payload, labels
+    ):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=True, labels=labels))
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "Issue was created in Jira" in response.json()["msg"]
+        fields = mock_jira.client.create_issue.call_args.kwargs["fields"]
+        assert "GitHub Pull Request" in fields["description"]
+        assert pr_payload["pull_request"]["html_url"] in fields["description"]
+        assert mock_github.issue.body in fields["description"]
+        assert fields["project"] == {"key": "TEST"}
+        mock_github.github_client.requester.requestJsonAndCheck.assert_called_once()
+
+    @pytest.mark.parametrize("label_name", ["bug", "BUG"])
+    def test_creates_ticket_with_matching_label(
+        self, signature_mock, mock_github, mock_jira, pr_payload, label_name
+    ):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=True))
+        mock_github.issue.labels = [_make_label(label_name)]
+        pr_payload["pull_request"]["labels"] = [{"name": label_name}]
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "Issue was created in Jira" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_called_once()
+
+    @pytest.mark.parametrize("label_names", [[], ["enhancement"]])
+    def test_missing_or_nonmatching_labels_ignored(
+        self, signature_mock, mock_github, mock_jira, pr_payload, label_names
+    ):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=True))
+        mock_github.issue.labels = [_make_label(name) for name in label_names]
+        pr_payload["pull_request"]["labels"] = [{"name": name} for name in label_names]
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "not labeled with the specified label" in response.json()["msg"]
+        mock_jira.client.enhanced_search_issues.assert_not_called()
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_linked_issue_ignored(self, signature_mock, mock_github, mock_jira, pr_payload):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=True))
+        mock_github.github_client.requester.requestJsonAndCheck.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {"pullRequest": {"closingIssuesReferences": {"totalCount": 1}}}
+                }
+            },
+        )
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "linked" in response.json()["msg"]
+        mock_jira.client.create_issue.assert_not_called()
+
+    @pytest.mark.parametrize("action", ["edited", "closed", "reopened", "synchronize", "labeled"])
+    def test_other_actions_ignored(
+        self, signature_mock, mock_github, mock_jira, pr_payload, action
+    ):
+        pr_payload["action"] = action
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        mock_github.repo.get_contents.assert_not_called()
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_redelivery_does_not_duplicate(
+        self, signature_mock, mock_github, mock_jira, pr_payload
+    ):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=True))
+        mock_github.issue.labels = [_make_label("bug")]
+        pr_payload["pull_request"]["labels"] = [{"name": "bug"}]
+        mock_jira.set_existing_issues()
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        mock_jira.client.enhanced_search_issues.assert_called_once()
+        search = mock_jira.client.enhanced_search_issues.call_args.args[0]
+        assert "GitHub Pull Request" in search
+        assert pr_payload["pull_request"]["html_url"] in search
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_link_lookup_failure_returns_500_without_creating_ticket(
+        self, signature_mock, mock_github, mock_jira, pr_payload
+    ):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(_default_settings(sync_orphaned_prs=True))
+        mock_github.github_client.requester.requestJsonAndCheck.return_value = (
+            {},
+            {"errors": [{"message": "Resource not accessible by integration"}]},
+        )
+        with TestClient(app, raise_server_exceptions=False) as failure_client:
+            response = failure_client.post("/", json=pr_payload)
+        assert response.status_code == 500
+        mock_jira.client.create_issue.assert_not_called()
+
+    def test_uses_ticket_settings_and_pr_feedback(
+        self, signature_mock, mock_github, mock_jira, pr_payload
+    ):
+        from tests.unit.conftest import _default_settings
+
+        mock_github.set_config(
+            _default_settings(
+                sync_orphaned_prs=True,
+                labels=["enhancement"],
+                summary="[PR] {issue.title}",
+                label_mapping={"enhancement": "Story"},
+                epic_key="TEST-2",
+                add_gh_comment=True,
+                add_gh_synced_label=True,
+            )
+        )
+        mock_github.issue.labels = [_make_label("enhancement")]
+        pr_payload["pull_request"]["labels"] = [{"name": "enhancement"}]
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        fields = mock_jira.client.create_issue.call_args.kwargs["fields"]
+        assert fields["summary"] == f"[PR] {mock_github.issue.title}"
+        assert fields["issuetype"] == {"name": "Story"}
+        assert fields["parent"] == {"key": "TEST-2"}
+        mock_github.issue.create_comment.assert_called_once()
+        mock_github.issue.add_to_labels.assert_called_once_with("synced-to-jira")
+
+    def test_bot_opened_pr_ignored(self, signature_mock, mock_github, mock_jira, pr_payload):
+        pr_payload["sender"]["login"] = os.environ["BOT_NAME"]
+        response = client.post("/", json=pr_payload)
+        assert response.status_code == 200
+        assert "bot" in response.json()["msg"]
+        mock_github.repo.get_contents.assert_not_called()
+        mock_jira.client.create_issue.assert_not_called()
+
+
 class TestConfigValidation:
     def test_config_file_missing(self, signature_mock, mock_github):
         mock_github.repo.get_contents.side_effect = GithubException(404, "Not Found", None)
