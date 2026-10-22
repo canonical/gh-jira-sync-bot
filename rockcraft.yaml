@@ -1,0 +1,20 @@
+name: gh-jira-sync-bot
+base: bare
+build-base: ubuntu@24.04
+version: '1.0'
+summary: FastAPI server for a GitHub bot that syncs issues to Jira
+description: |
+    A lightweight FastAPI server that backs a GitHub App, synchronizing GitHub
+    issues and comments to Jira. Receives GitHub webhooks, verifies them, and
+    creates or updates the matching Jira issues.
+platforms:
+    amd64:
+
+extensions:
+- fastapi-framework
+
+parts:
+  fastapi-framework/install-app:
+    prime:
+      - app/app.py
+      - app/github_jira_sync_app

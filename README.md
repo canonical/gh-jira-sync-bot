@@ -84,12 +84,12 @@ settings:
 You need this section only if you deploy your own bot. However, even for this purpose I recommend to use https://github.com/canonical/charmed-gh-jira-sync-bot
 
 The following environment variables are required:  
-`APP_ID` - GitHub App ID  
-`PRIVATE_KEY` - GitHub App private key  
-`WEBHOOK_SECRET` - GitHub App webhook secret  
-`JIRA_INSTANCE` - Jira instance URL  
-`JIRA_USERNAME` - Jira username  
-`JIRA_TOKEN` - Jira API token  
+`APP_GITHUB_APP_ID` - GitHub App ID  
+`APP_GITHUB_PRIVATE_KEY` - GitHub App private key  
+`APP_WEBHOOK_SECRET` - GitHub App webhook secret  
+`APP_JIRA_INSTANCE` - Jira instance URL  
+`APP_JIRA_USERNAME` - Jira username  
+`APP_JIRA_TOKEN` - Jira API token  
 
 ## GitHub App installation
 This app is meant to be installed as a GitHub application.  

@@ -2,6 +2,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm,python,django
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm,python,django
 
+*.rock
+
 /input/
 results*/
 dummy.py

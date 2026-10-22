@@ -9,6 +9,7 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import SERVICE_NAME
 from opentelemetry.sdk.resources import Resource
 from prometheus_client import make_asgi_app
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = logging.getLogger("sync-bot-server")
 
@@ -97,6 +98,10 @@ def setup_metrics(app: FastAPI, service_name="sync-bot"):
         error_counter=error_counter,
         duration_histogram=request_duration_histogram,
     )
+
+    # Register standard http_* metrics (for the default COS FastAPI dashboard)
+    # into the same registry already served by the /metrics mount above.
+    Instrumentator().instrument(app)
 
     return {
         "meter": meter,
