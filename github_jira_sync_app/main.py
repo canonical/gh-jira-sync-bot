@@ -426,9 +426,6 @@ def _sync_with_jira(
         "issuetype": {"name": issue_type},
     }
 
-    if settings["epic_key"]:
-        issue_dict["parent"] = {"key": settings["epic_key"]}
-
     if settings["components"]:
         allowed_components = [c.name for c in jira.project_components(settings["jira_project_key"])]
 
@@ -458,6 +455,10 @@ def _sync_with_jira(
 
         if payload["action"] == "closed":
             return {"msg": "Issue in Jira doesn't exist and GitHub issue was closed. Ignoring."}
+
+        # Set the parent only on creation so edits keep any parent changed in Jira.
+        if settings["epic_key"]:
+            issue_dict["parent"] = {"key": settings["epic_key"]}
 
         new_issue = jira.create_issue(fields=issue_dict)
         existing_issues.append(new_issue)

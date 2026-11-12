@@ -342,6 +342,19 @@ class TestExistingJiraIssue:
         assert response.json() == {"msg": "Updated existing Jira Issue"}
         mock_jira.existing_issue.update.assert_called_once()
 
+    def test_edit_existing_issue_keeps_parent(self, signature_mock, mock_github, mock_jira):
+        from tests.unit.conftest import _default_settings
+
+        settings = _default_settings(epic_key="EPIC-1")
+        mock_github.set_config(settings)
+        mock_github.issue.labels = [_make_label("bug")]
+        mock_jira.set_existing_issues()
+        response = client.post("/", json=_get_json("issue_edited.json"))
+        assert response.status_code == 200
+        assert response.json() == {"msg": "Updated existing Jira Issue"}
+        fields = mock_jira.existing_issue.update.call_args[1]["fields"]
+        assert "parent" not in fields
+
     def test_edit_existing_issue_appends_components(self, signature_mock, mock_github, mock_jira):
         from tests.unit.conftest import _default_settings
 

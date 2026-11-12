@@ -50,7 +50,8 @@ settings:
   # (Optional) (Default: true) Synchronize comments from GitHub to Jira
   sync_comments: true
   
-  # (Optional) (Default: None) Parent Epic key to link the issue to
+  # (Optional) (Default: None) Parent Epic key to link the issue to when it is created
+  # in Jira. Editing the GitHub issue does not change the Jira parent.
   epic_key: "MTC-296"
       
   # (Optional) Dictionary mapping GitHub issue labels to Jira issue types. 
